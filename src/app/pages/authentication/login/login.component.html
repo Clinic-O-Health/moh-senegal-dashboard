@@ -1,0 +1,98 @@
+<div class="login-background">
+  <img class="vector" alt="vector" src="assets/images/Vector.png" />
+  <img class="logo" alt="logo" src="assets/images/logo_white.png" />
+  <div class="login-container shadow-2xl">
+    <div class="text-center">
+      <h2 class="text-2xl font-bold">Bienvenue</h2>
+      <p class="text-lg">Connectez-vous pour commencer en saisissant vos identifiants.</p>
+    </div>
+    <!-- <ng-template pTemplate="content"> -->
+    <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-6">
+      <!-- Email -->
+      <div class="flex flex-col gap-2">
+        <label for="email" class="text-sm font-semibold text-gray-700"> Email </label>
+        <input
+          pInputText
+          id="email"
+          formControlName="email"
+          type="email"
+          placeholder="votre.email@example.com"
+          class="w-full"
+          [class.p-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+        />
+        <small
+          *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          class="text-red-500"
+        >
+          Email requis et valide
+        </small>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="flex flex-col gap-2">
+        <label for="password" class="text-sm font-semibold text-gray-700"> Mot de passe </label>
+        <p-password
+          formControlName="password"
+          [toggleMask]="true"
+          [feedback]="false"
+          placeholder="••••••••"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          [class.p-invalid]="
+            loginForm.get('password')?.invalid && loginForm.get('password')?.touched
+          "
+        />
+        <small
+          *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          class="text-red-500"
+        >
+          Mot de passe requis (min. 6 caractères)
+        </small>
+      </div>
+
+      <!-- Se souvenir de moi et Mot de passe oublié -->
+      <!-- <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <p-checkbox formControlName="rememberMe" [binary]="true" inputId="rememberMe" />
+            <label for="rememberMe" class="text-sm text-gray-700 cursor-pointer">
+              Se souvenir de moi
+            </label>
+          </div> -->
+      <a
+        href="/authentication/forgotten-password"
+        class="text-sm text-primary-600 hover:text-primary-800 font-medium"
+      >
+        Mot de passe oublié?
+      </a>
+
+      <!-- Bouton de connexion -->
+      <p-button
+        type="submit"
+        label="Se connecter"
+        icon="pi pi-sign-in"
+        [loading]="isLoading"
+        [disabled]="loginForm.invalid || isLoading"
+        styleClass="w-full"
+        severity="primary"
+      />
+
+      <!-- Lien vers création de compte -->
+      <div class="text-center pt-4 border-t border-gray-200">
+        <span class="text-sm text-gray-600">Pas encore de compte? </span>
+        <a
+          (click)="goToRegister()"
+          class="text-sm text-primary-600 hover:text-primary-800 font-semibold cursor-pointer"
+        >
+          Créer un compte
+        </a>
+      </div>
+    </form>
+    <!-- </ng-template> -->
+
+    <!-- Footer -->
+    <div class="text-center mt-8 text-sm text-gray-500">
+      <p>© 2026 Plateforme Clinic+O. Tous droits réservés.</p>
+    </div>
+  </div>
+</div>
+<p-toast />

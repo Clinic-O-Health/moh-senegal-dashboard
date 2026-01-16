@@ -1,0 +1,71 @@
+<!-- Overlay mobile -->
+<div
+  *ngIf="isOpen"
+  class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+  (click)="closeSidebar()"
+></div>
+
+<!-- Sidebar -->
+<aside [class]="sidebarClasses">
+  <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+    <!-- Menu items -->
+    <a
+      *ngFor="let item of menuItems"
+      [routerLink]="item.route"
+      routerLinkActive="bg-indigo-50 text-indigo-700 border-indigo-600"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 border-l-4 border-transparent group"
+      (click)="onMobileClick()"
+    >
+      <i [class]="item.icon + ' text-lg group-hover:scale-110 transition-transform'"></i>
+      <span class="font-medium">{{ item.label }}</span>
+      <span
+        *ngIf="item.badge"
+        class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+      >
+        {{ item.badge }}
+      </span>
+    </a>
+
+    <!-- Divider -->
+    <div class="border-t border-gray-200 my-4"></div>
+
+    <!-- Menu secondaire -->
+    <div class="space-y-2">
+      <a
+        href="#"
+        class="flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        <i class="pi pi-cog text-lg"></i>
+        <span class="font-medium">Paramètres</span>
+      </a>
+
+      <!-- <p (click)="logout()"
+        class="flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        <i class="pi pi-question-circle text-lg"></i>
+        <span class="font-medium">Deconnexion</span>
+      </p> -->
+    </div>
+  </nav>
+
+  <!-- User info footer -->
+  @if(user()){
+  <div class="p-4 border-t border-gray-200">
+    <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
+      <div
+        class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold"
+      >
+        {{ user().first_name | slice:0:1 }}{{ user().last_name | slice:0:1 }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-gray-900 truncate">{{user().first_name}} {{user().last_name}}</p>
+        <p class="text-xs text-gray-500 truncate">{{user().role.name}}</p>
+      </div>
+      <button (click)="logout()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+        <i class="pi pi-sign-out text-lg"></i>
+      </button>
+    </div>
+  </div>
+  }
+</aside>

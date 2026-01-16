@@ -1,0 +1,76 @@
+<div class="login-background">
+  <img class="vector" alt="vector" src="assets/images/Vector.png" />
+  <img class="logo" alt="logo" src="assets/images/logo_white.png" />
+  <div class="login-container shadow-2xl">
+    <div class="text-center">
+      <h2 class="text-2xl font-bold">Validation de compte</h2>
+    </div>
+      <form [formGroup]="tokenForm" (ngSubmit)="onLogin()" class="space-y-6">
+        <!-- Email -->
+        <div class="flex flex-col gap-2">
+          <label for="email" class="text-sm font-semibold text-gray-700"> Email </label>
+          <input
+            pInputText
+            id="email"
+            formControlName="email"
+            type="email"
+            placeholder="votre.email@example.com"
+            class="w-full"
+            [class.p-invalid]="tokenForm.get('email')?.invalid && tokenForm.get('email')?.touched"
+          />
+          <small
+            *ngIf="tokenForm.get('email')?.invalid && tokenForm.get('email')?.touched"
+            class="text-red-500"
+          >
+            Email requis et valide
+          </small>
+        </div>
+        <!-- token -->
+        <div class="flex flex-col gap-2">
+          <label for="token" class="text-sm font-semibold text-gray-700"> Code de validation </label>
+          <input
+            pInputText
+            id="token"
+            formControlName="token"
+            type="token"
+            class="w-full"
+            [class.p-invalid]="tokenForm.get('token')?.invalid && tokenForm.get('token')?.touched"
+          />
+          <small
+            *ngIf="tokenForm.get('token')?.invalid && tokenForm.get('token')?.touched"
+            class="text-red-500"
+          >
+            Token requis et valide
+          </small>
+        </div>
+
+        <!-- Bouton de connexion -->
+        <p-button
+          type="submit"
+          label="Verifier mon compte"
+          icon="pi pi-sign-in"
+          [loading]="isLoading"
+          [disabled]="tokenForm.invalid || isLoading"
+          styleClass="w-full"
+          severity="primary"
+        />
+
+        <!-- Lien vers création de compte -->
+        <div class="text-center mt-6">
+          <span class="text-sm text-gray-600">Vous avez déjà un compte? </span>
+          <a
+            (click)="goToLogin()"
+            class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+          >
+            Se connecter
+          </a>
+        </div>
+      </form>
+
+    <!-- Footer -->
+    <div class="text-center mt-8 text-sm text-gray-500">
+      <p>© 2026 Plateforme Clinic+O. Tous droits réservés.</p>
+    </div>
+  </div>
+</div>
+<p-toast />

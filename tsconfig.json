@@ -3,17 +3,53 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    // "strict": true,
+    // "noImplicitOverride": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // "noImplicitReturns": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "skipLibCheck": true,
+    // "isolatedModules": true,
+    // "experimentalDecorators": true,
+    // "importHelpers": true,
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
     "strict": true,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "declaration": false,
+    "noUnusedLocals": false,
+    "exactOptionalPropertyTypes": true,
+    "useDefineForClassFields": true,
+    "noUnusedParameters": false,
     "experimentalDecorators": true,
-    "importHelpers": true,
-    "target": "ES2022",
-    "module": "preserve"
+    "target": "ES2023",
+    "module": "ES2022",
+    "lib": ["ES2023", "dom"],
+    "paths": {
+      "@core/*": [
+        "src/app/core/*"
+      ],
+      "@shared/*": [
+        "src/app/shared/*"
+      ],
+      "@pages/*": [
+        "src/app/pages/*"
+      ],
+      "@assets/*": [
+        "src/assets/*"
+      ],
+      "@environments/*": [
+        "src/environments/*"
+      ]
+    },
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

@@ -1,0 +1,284 @@
+<div class="mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Patients</h1>
+      <p class="text-gray-600 mt-1">Gestion et suivi des patients</p>
+    </div>
+    <!-- <p-button
+      label="Nouveau patient"
+      icon="pi pi-plus"
+      severity="primary"
+      (onClick)="onNewPatient()"
+    /> -->
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Total Patients</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ patients.length }}</p>
+      </div>
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-users text-blue-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Patients Actifs</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getActivePatients() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-check-circle text-green-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">À Risque</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getRiskPatients() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-exclamation-triangle text-orange-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Urgents</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getUrgentPatients() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-times-circle text-red-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <!-- Table Toolbar -->
+  <div class="p-4 md:p-6 border-b border-gray-200">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <!-- Search -->
+      <div class="flex-1">
+        <span class="p-input-icon-left w-full">
+          <input
+            pInputText
+            type="text"
+            placeholder="Rechercher un patient..."
+            class="w-full"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+          />
+        </span>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex gap-2">
+        <p-select
+          [options]="statutOptions"
+          [(ngModel)]="selectedStatut"
+          placeholder="Statut"
+          [showClear]="true"
+          styleClass="w-full md:w-40"
+          (onChange)="onFilter()"
+        />
+
+        <p-select
+          [options]="classificationOptions"
+          [(ngModel)]="selectedClassification"
+          placeholder="Classification"
+          [showClear]="true"
+          styleClass="w-full md:w-40"
+          (onChange)="onFilter()"
+        />
+
+        <p-button
+          icon="pi pi-filter-slash"
+          [text]="true"
+          severity="secondary"
+          pTooltip="Réinitialiser les filtres"
+          (onClick)="resetFilters()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <p-table
+    [value]="filteredPatients"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 20, 50]"
+    [loading]="loading"
+    styleClass="p-datatable-sm"
+    [globalFilterFields]="['nom', 'prenom', 'telephone', 'acs_assigne']"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th class="px-4 py-3">Patient</th>
+        <th class="px-4 py-3 hidden md:table-cell">Âge/Sexe</th>
+        <th class="px-4 py-3 hidden lg:table-cell">Téléphone</th>
+        <th class="px-4 py-3 hidden lg:table-cell">ACS Assigné</th>
+        <th class="px-4 py-3">Classification</th>
+        <th class="px-4 py-3">Statut</th>
+        <th class="px-4 py-3 hidden xl:table-cell">Dernière visite</th>
+        <th class="px-4 py-3 text-right">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-patient>
+      <tr class="hover:bg-gray-50 transition-colors">
+        <!-- Patient -->
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-semibold flex-shrink-0"
+            >
+              {{ patient.prenom.charAt(0) }}{{ patient.nom.charAt(0) }}
+            </div>
+            <div class="min-w-0">
+              <p class="font-semibold text-gray-900 truncate">
+                {{ patient.prenom }} {{ patient.nom }}
+              </p>
+              <p class="text-sm text-gray-500 truncate md:hidden">
+                {{ patient.age }} ans, {{ patient.sexe }}
+              </p>
+            </div>
+          </div>
+        </td>
+
+        <!-- Âge/Sexe -->
+        <td class="px-4 py-3 hidden md:table-cell">
+          <p class="text-gray-900">{{ patient.age }} ans</p>
+          <p class="text-sm text-gray-500">{{ patient.sexe }}</p>
+        </td>
+
+        <!-- Téléphone -->
+        <td class="px-4 py-3 hidden lg:table-cell">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-phone text-gray-400 text-sm"></i>
+            <span class="text-gray-900">{{ patient.telephone }}</span>
+          </div>
+        </td>
+
+        <!-- ACS -->
+        <td class="px-4 py-3 hidden lg:table-cell">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-user text-gray-400 text-sm"></i>
+            <span class="text-gray-700">{{ patient.acs_assigne }}</span>
+          </div>
+        </td>
+
+        <!-- Classification -->
+        <td class="px-4 py-3">
+          <div class="flex flex-col gap-1">
+            <p-tag
+              *ngIf="patient.classification_hta"
+              [value]="'HTA: ' + patient.classification_hta"
+              [severity]="patient.classification_hta === 'elevee' ? 'danger' : 'success'"
+              styleClass="text-xs"
+            />
+            <p-tag
+              *ngIf="patient.classification_diabete"
+              [value]="'Diabète: ' + patient.classification_diabete"
+              [severity]="patient.classification_diabete === 'elevee' ? 'danger' : 'success'"
+              styleClass="text-xs"
+            />
+            <p-tag
+              *ngIf="!patient.classification_hta && !patient.classification_diabete"
+              value="Aucune"
+              severity="secondary"
+              styleClass="text-xs"
+            />
+          </div>
+        </td>
+
+        <!-- Statut -->
+        <td class="px-4 py-3">
+          <p-tag
+            [value]="getStatutLabel(patient.statut_suivi)"
+            [severity]="getStatutSeverity(patient.statut_suivi)"
+          />
+        </td>
+
+        <!-- Dernière visite -->
+        <td class="px-4 py-3 hidden xl:table-cell">
+          <p class="text-gray-900">{{ patient.derniere_visite | date : 'dd/MM/yyyy' }}</p>
+          <p class="text-xs text-gray-500">{{ getRelativeTime(patient.derniere_visite) }}</p>
+        </td>
+
+        <!-- Actions -->
+        <td class="px-4 py-3">
+          <div class="flex items-center justify-end gap-2">
+            <p-button
+              icon="pi pi-eye"
+              [text]="true"
+              [rounded]="true"
+              severity="info"
+              pTooltip="Voir le dossier"
+              tooltipPosition="left"
+              (onClick)="viewPatient(patient)"
+            />
+            <p-button
+              icon="pi pi-pencil"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              pTooltip="Modifier"
+              tooltipPosition="left"
+              (onClick)="editPatient(patient)"
+            />
+            <p-button
+              icon="pi pi-phone"
+              [text]="true"
+              [rounded]="true"
+              severity="success"
+              pTooltip="Téléconsultation"
+              tooltipPosition="left"
+              (onClick)="callPatient(patient)"
+            />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center py-12">
+          <div class="flex flex-col items-center gap-4">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-users text-gray-400 text-4xl"></i>
+            </div>
+            <div>
+              <p class="text-lg font-semibold text-gray-900 mb-1">Aucun patient trouvé</p>
+              <p class="text-gray-500">
+                {{
+                  searchTerm || selectedStatut || selectedClassification
+                    ? 'Essayez de modifier vos filtres'
+                    : 'Commencez par ajouter un nouveau patient'
+                }}
+              </p>
+            </div>
+            <p-button
+              *ngIf="!searchTerm && !selectedStatut && !selectedClassification"
+              label="Ajouter un patient"
+              icon="pi pi-plus"
+              (onClick)="onNewPatient()"
+            />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

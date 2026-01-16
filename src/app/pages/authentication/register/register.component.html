@@ -1,0 +1,232 @@
+<div class="login-background">
+  <img class="vector" alt="vector" src="assets/images/Vector.png" />
+  <img class="logo" alt="logo" src="assets/images/logo_white.png" />
+  <div class="registration-container shadow-2xl">
+    <div class="text-center">
+      <h2 class="text-2xl font-bold">Créer un compte</h2>
+      <p class="text-lg">Rejoignez la plateforme</p>
+    </div>
+    @if(!accountCreated){
+    <form [formGroup]="registerForm" class="space-y-6 p-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Prénom -->
+        <div class="flex flex-col gap-2">
+          <label for="first_name" class="text-sm font-semibold text-gray-700">
+            Prénom <span class="text-red-500">*</span>
+          </label>
+          <input
+            pInputText
+            id="first_name"
+            formControlName="first_name"
+            placeholder="Votre prénom"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Nom -->
+        <div class="flex flex-col gap-2">
+          <label for="nom" class="text-sm font-semibold text-gray-700">
+            Nom <span class="text-red-500">*</span>
+          </label>
+          <input
+            pInputText
+            id="last_name"
+            formControlName="last_name"
+            placeholder="Votre nom"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Email -->
+        <div class="flex flex-col gap-2">
+          <label for="email" class="text-sm font-semibold text-gray-700">
+            Email <span class="text-red-500">*</span>
+          </label>
+          <input
+            pInputText
+            id="email"
+            formControlName="email"
+            type="email"
+            placeholder="email@example.com"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Téléphone -->
+        <div class="flex flex-col gap-2">
+          <label for="phone_number" class="text-sm font-semibold text-gray-700">
+            Téléphone <span class="text-red-500">*</span>
+          </label>
+          <input
+            pInputText
+            id="phone_number"
+            formControlName="phone_number"
+            placeholder="+221 77 123 45 67"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Rôle -->
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label for="role" class="text-sm font-semibold text-gray-700">
+            Rôle <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            formControlName="role"
+            [options]="roles"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez votre rôle"
+            styleClass="w-full"
+          />
+        </div>
+
+        <!-- District -->
+        <!-- <div class="flex flex-col gap-2">
+          <label for="district" class="text-sm font-semibold text-gray-700">
+            District <span class="text-red-500">*</span>
+          </label>
+          <input
+            pInputText
+            id="district"
+            formControlName="district"
+            placeholder="Nom du district"
+            class="w-full"
+          />
+        </div> -->
+
+        <!-- Poste de santé -->
+        <!-- <div class="flex flex-col gap-2">
+          <label for="poste_sante" class="text-sm font-semibold text-gray-700">
+            Poste/Centre de santé
+          </label>
+          <input
+            pInputText
+            id="poste_sante"
+            formControlName="poste_sante"
+            placeholder="Nom du poste de santé"
+            class="w-full"
+          />
+        </div> -->
+
+        <!-- Site communautaire -->
+        <!-- <div class="flex flex-col gap-2">
+          <label for="site_communautaire" class="text-sm font-semibold text-gray-700">
+            Site communautaire/Village
+          </label>
+          <input
+            pInputText
+            id="site_communautaire"
+            formControlName="site_communautaire"
+            placeholder="Nom du site/village"
+            class="w-full"
+          />
+        </div> -->
+      </div>
+      <!-- Région -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label for="region" class="text-sm font-semibold text-gray-700">
+            Région <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            formControlName="region"
+            [options]="regions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez la région"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="w-full">
+        <!-- Mot de passe -->
+        <div class="flex flex-col gap-2">
+          <label for="password" class="text-sm font-semibold text-gray-700">
+            Mot de passe <span class="text-red-500">*</span>
+          </label>
+          <p-password
+            formControlName="password"
+            [toggleMask]="true"
+            placeholder="••••••••"
+            styleClass="w-full"
+            inputStyleClass="w-full"
+            [feedback]="true"
+            promptLabel="Entrez un mot de passe"
+            weakLabel="Faible"
+            mediumLabel="Moyen"
+            strongLabel="Fort"
+          />
+        </div>
+
+        <!-- Confirmer mot de passe -->
+        <div class="flex flex-col gap-2">
+          <label for="confirmPassword" class="text-sm font-semibold text-gray-700">
+            Confirmer le mot de passe <span class="text-red-500">*</span>
+          </label>
+          <p-password
+            formControlName="confirmPassword"
+            [toggleMask]="true"
+            [feedback]="false"
+            placeholder="••••••••"
+            styleClass="w-full"
+            inputStyleClass="w-full"
+          />
+          <small
+            *ngIf="
+              registerForm.hasError('passwordMismatch') &&
+              registerForm.get('confirmPassword')?.touched
+            "
+            class="text-red-500"
+          >
+            Les mots de passe ne correspondent pas
+          </small>
+        </div>
+
+        <!-- Info sécurité -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+          <div class="flex gap-3">
+            <i class="pi pi-info-circle text-blue-600 mt-1"></i>
+            <div class="text-sm text-blue-800">
+              <p class="font-semibold mb-2">Critères de sécurité:</p>
+              <ul class="list-disc list-inside space-y-1 text-blue-700">
+                <li>Minimum 8 caractères</li>
+                <li>Au moins une lettre majuscule</li>
+                <li>Au moins un chiffre</li>
+                <li>Au moins un caractère spécial</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-center pt-4">
+          <p-button
+            label="Créer le compte"
+            icon="pi pi-check"
+            iconPos="right"
+            (onClick)="onRegister()"
+            [loading]="isLoading"
+            [disabled]="registerForm.invalid || isLoading"
+          />
+        </div>
+      </div>
+      <div class="text-center mt-6">
+        <span class="text-sm text-gray-600">Vous avez déjà un compte? </span>
+        <a
+          (click)="goToLogin()"
+          class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+        >
+          Se connecter
+        </a>
+      </div>
+    </form>
+    } @else{
+      <h1 class="text-2xl">Votre compte a été créé avec succès. Vous allez recevoir un mail avec le code de confirmation</h1>
+    }
+    <!-- Footer -->
+    <div class="text-center mt-8 text-sm text-gray-500">
+      <p>© 2026 Plateforme Clinic+O. Tous droits réservés.</p>
+    </div>
+  </div>
+</div>
+<p-toast />
