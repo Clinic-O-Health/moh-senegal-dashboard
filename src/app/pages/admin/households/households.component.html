@@ -1,1 +1,252 @@
-<p>households works!</p>
+<div class="mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Ménages</h1>
+      <p class="text-gray-600 mt-1">Gestion des ménages et familles</p>
+    </div>
+    <p-button
+      label="Nouveau ménage"
+      icon="pi pi-plus"
+      severity="primary"
+      (onClick)="onNewHousehold()"
+    />
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Total Ménages</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ households.length }}</p>
+      </div>
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-home text-blue-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Total Personnes</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getTotalPersonnes() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-users text-green-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Personnes Dépistées</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getTotalDepistes() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-chart-line text-indigo-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Personnes à Risque</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getTotalARisque() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-exclamation-triangle text-orange-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <!-- Toolbar -->
+  <div class="p-4 md:p-6 border-b border-gray-200">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <!-- Search -->
+      <div class="flex-1">
+        <span class="p-input-icon-left w-full">
+          <input
+            pInputText
+            type="text"
+            placeholder="Rechercher un ménage..."
+            class="w-full"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+          />
+        </span>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex gap-2">
+        <p-select
+          [options]="statutOptions"
+          [(ngModel)]="selectedStatut"
+          placeholder="Statut"
+          [showClear]="true"
+          styleClass="w-full md:w-40"
+          (onChange)="onFilter()"
+        />
+
+        <p-button
+          icon="pi pi-filter-slash"
+          [text]="true"
+          severity="secondary"
+          pTooltip="Réinitialiser les filtres"
+          (onClick)="resetFilters()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <p-table
+    [value]="filteredHouseholds"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 20, 50]"
+    [loading]="loading"
+    styleClass="p-datatable-sm"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th class="px-4 py-3">Localisation</th>
+        <th class="px-4 py-3 hidden lg:table-cell">Contact</th>
+        <th class="px-4 py-3">Membres</th>
+        <th class="px-4 py-3 hidden md:table-cell">Dépistés</th>
+        <th class="px-4 py-3 hidden md:table-cell">À Risque</th>
+        <th class="px-4 py-3 hidden xl:table-cell">ACS</th>
+        <th class="px-4 py-3">Statut</th>
+        <th class="px-4 py-3 text-right">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-household>
+      <tr class="hover:bg-gray-50 transition-colors">
+        <!-- Localisation -->
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-semibold flex-shrink-0"
+            >
+              <i class="pi pi-home"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="font-semibold text-gray-900 truncate">
+                {{ household.location }}
+              </p>
+              <p class="text-sm text-gray-500 truncate">
+                {{ household.commune }}, {{ household.district }}
+              </p>
+            </div>
+          </div>
+        </td>
+
+        <!-- Contact -->
+        <td class="px-4 py-3 hidden lg:table-cell">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-phone text-gray-400 text-sm"></i>
+            <span class="text-gray-900">{{ household.headOfHouseHoldContact || 'Non renseigné' }}</span>
+          </div>
+        </td>
+
+        <!-- Nombre membres -->
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-users text-gray-400"></i>
+            <span class="font-semibold text-gray-900">{{ household.totalMembers || 0 }}</span>
+          </div>
+        </td>
+
+        <!-- Dépistés -->
+        <td class="px-4 py-3 hidden md:table-cell">
+          <div class="flex items-center gap-2">
+            <div class="w-full max-w-[100px] bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-indigo-600 h-2 rounded-full"
+                [style.width.%]="household.totalMembers ? ((household.membersScreened || 0) / household.totalMembers) * 100 : 0"
+              ></div>
+            </div>
+            <span class="text-sm font-medium text-gray-700">
+              {{ household.membersScreened || 0 }}/{{ household.totalMembers || 0 }}
+            </span>
+          </div>
+        </td>
+
+        <!-- À risque -->
+        <td class="px-4 py-3 hidden md:table-cell">
+          <p-tag
+            *ngIf="household.membersAtRisk && household.membersAtRisk > 0"
+            [value]="household.membersAtRisk.toString()"
+            severity="warn"
+            icon="pi pi-exclamation-triangle"
+          />
+          <span *ngIf="!household.membersAtRisk || household.membersAtRisk === 0" class="text-gray-400">—</span>
+        </td>
+
+        <!-- ACS -->
+        <td class="px-4 py-3 hidden xl:table-cell">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-user text-gray-400 text-sm"></i>
+            <span class="text-gray-700">{{ household.workerName || 'Non assigné' }}</span>
+          </div>
+        </td>
+
+        <!-- Statut -->
+        <td class="px-4 py-3">
+          <p-tag
+            [value]="getStatutLabel(household)"
+            [severity]="getStatutSeverity(household)"
+          />
+        </td>
+
+        <!-- Actions -->
+        <td class="px-4 py-3">
+          <div class="flex items-center justify-end gap-2">
+            <p-button
+              icon="pi pi-eye"
+              [text]="true"
+              [rounded]="true"
+              severity="info"
+              pTooltip="Voir le ménage"
+              tooltipPosition="left"
+              (onClick)="viewHousehold(household)"
+            />
+            <p-button
+              icon="pi pi-pencil"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              pTooltip="Modifier"
+              tooltipPosition="left"
+              (onClick)="editHousehold(household)"
+            />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center py-12">
+          <div class="flex flex-col items-center gap-4">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-home text-gray-400 text-4xl"></i>
+            </div>
+            <div>
+              <p class="text-lg font-semibold text-gray-900 mb-1">Aucun ménage trouvé</p>
+              <p class="text-gray-500">Commencez par ajouter un nouveau ménage</p>
+            </div>
+            <p-button label="Ajouter un ménage" icon="pi pi-plus" (onClick)="onNewHousehold()" />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

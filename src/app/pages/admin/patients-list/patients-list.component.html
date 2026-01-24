@@ -2,7 +2,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Patients</h1>
-      <p class="text-gray-600 mt-1">Gestion et suivi des patients</p>
+      <p class="text-gray-600 mt-1">Gestion et suivi des membres de ménages</p>
     </div>
     <!-- <p-button
       label="Nouveau patient"
@@ -14,7 +14,7 @@
 </div>
 
 <!-- Stats Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
   <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
     <div class="flex items-center justify-between">
       <div>
@@ -23,6 +23,18 @@
       </div>
       <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
         <i class="pi pi-users text-blue-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Dépistés</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getScreenedPatients() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-check-square text-indigo-600 text-2xl"></i>
       </div>
     </div>
   </div>
@@ -75,7 +87,7 @@
           <input
             pInputText
             type="text"
-            placeholder="Rechercher un patient..."
+            placeholder="Rechercher un patient (nom, prénom, téléphone, ACS)..."
             class="w-full"
             [(ngModel)]="searchTerm"
             (input)="onSearch()"
@@ -122,37 +134,42 @@
     [rowsPerPageOptions]="[5, 10, 20, 50]"
     [loading]="loading"
     styleClass="p-datatable-sm"
-    [globalFilterFields]="['nom', 'prenom', 'telephone', 'acs_assigne']"
+    [globalFilterFields]="['lastName', 'firstName', 'phoneNumber', 'assignedWorkerName']"
+    [rowHover]="true"
   >
     <ng-template pTemplate="header">
       <tr>
-        <th class="px-4 py-3">Patient</th>
-        <th class="px-4 py-3 hidden md:table-cell">Âge/Sexe</th>
-        <th class="px-4 py-3 hidden lg:table-cell">Téléphone</th>
-        <th class="px-4 py-3 hidden lg:table-cell">ACS Assigné</th>
-        <th class="px-4 py-3">Classification</th>
-        <th class="px-4 py-3">Statut</th>
-        <th class="px-4 py-3 hidden xl:table-cell">Dernière visite</th>
-        <th class="px-4 py-3 text-right">Actions</th>
+        <th scope="col" class="px-4 py-3">Patient</th>
+        <th scope="col" class="px-4 py-3 hidden md:table-cell">Âge/Sexe</th>
+        <th scope="col" class="px-4 py-3 hidden lg:table-cell">Téléphone</th>
+        <th scope="col" class="px-4 py-3 hidden lg:table-cell">ACS Assigné</th>
+        <th scope="col" class="px-4 py-3">Classification</th>
+        <th scope="col" class="px-4 py-3">Statut</th>
+        <th scope="col" class="px-4 py-3 hidden xl:table-cell">Dernière visite</th>
+        <th scope="col" class="px-4 py-3 text-right">Actions</th>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="body" let-patient>
-      <tr class="hover:bg-gray-50 transition-colors">
+      <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewPatient(patient)">
         <!-- Patient -->
         <td class="px-4 py-3">
           <div class="flex items-center gap-3">
             <div
-              class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-semibold flex-shrink-0"
+              class="w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0"
+              [ngClass]="{
+                'bg-blue-100 text-blue-700': patient.sex === 'M',
+                'bg-pink-100 text-pink-700': patient.sex === 'F'
+              }"
             >
-              {{ patient.prenom.charAt(0) }}{{ patient.nom.charAt(0) }}
+              {{ getPatientInitials(patient) }}
             </div>
             <div class="min-w-0">
               <p class="font-semibold text-gray-900 truncate">
-                {{ patient.prenom }} {{ patient.nom }}
+                {{ patient.firstName }} {{ patient.lastName }}
               </p>
               <p class="text-sm text-gray-500 truncate md:hidden">
-                {{ patient.age }} ans, {{ patient.sexe }}
+                {{ patient.age }} ans, {{ patient.sex }}
               </p>
             </div>
           </div>
@@ -161,14 +178,16 @@
         <!-- Âge/Sexe -->
         <td class="px-4 py-3 hidden md:table-cell">
           <p class="text-gray-900">{{ patient.age }} ans</p>
-          <p class="text-sm text-gray-500">{{ patient.sexe }}</p>
+          <p class="text-sm text-gray-500">{{ patient.sex === 'M' ? 'Homme' : 'Femme' }}</p>
         </td>
 
         <!-- Téléphone -->
-        <td class="px-4 py-3 hidden lg:table-cell">
+        <td class="px-4 py-3 hidden lg:table-cell" (click)="$event.stopPropagation()">
           <div class="flex items-center gap-2">
             <i class="pi pi-phone text-gray-400 text-sm"></i>
-            <span class="text-gray-900">{{ patient.telephone }}</span>
+            <a [href]="'tel:' + patient.phoneNumber" class="text-gray-900 hover:text-blue-600">
+              {{ patient.phoneNumber || '—' }}
+            </a>
           </div>
         </td>
 
@@ -176,7 +195,7 @@
         <td class="px-4 py-3 hidden lg:table-cell">
           <div class="flex items-center gap-2">
             <i class="pi pi-user text-gray-400 text-sm"></i>
-            <span class="text-gray-700">{{ patient.acs_assigne }}</span>
+            <span class="text-gray-700">{{ patient.assignedWorkerName || '—' }}</span>
           </div>
         </td>
 
@@ -184,21 +203,21 @@
         <td class="px-4 py-3">
           <div class="flex flex-col gap-1">
             <p-tag
-              *ngIf="patient.classification_hta"
-              [value]="'HTA: ' + patient.classification_hta"
-              [severity]="patient.classification_hta === 'elevee' ? 'danger' : 'success'"
+              *ngIf="patient.htaClassification"
+              [value]="'HTA: ' + (patient.htaClassification === 'elevee' ? 'Élevée' : 'Normale')"
+              [severity]="patient.htaClassification === 'elevee' ? 'danger' : 'success'"
               styleClass="text-xs"
             />
             <p-tag
-              *ngIf="patient.classification_diabete"
-              [value]="'Diabète: ' + patient.classification_diabete"
-              [severity]="patient.classification_diabete === 'elevee' ? 'danger' : 'success'"
+              *ngIf="patient.diabetesClassification"
+              [value]="'Diabète: ' + (patient.diabetesClassification === 'elevee' ? 'Élevé' : 'Normal')"
+              [severity]="patient.diabetesClassification === 'elevee' ? 'danger' : 'success'"
               styleClass="text-xs"
             />
             <p-tag
-              *ngIf="!patient.classification_hta && !patient.classification_diabete"
-              value="Aucune"
-              severity="secondary"
+              *ngIf="!patient.htaClassification && !patient.diabetesClassification"
+              [value]="patient.filledScreeningForm ? 'Normal' : 'Non dépisté'"
+              [severity]="patient.filledScreeningForm ? 'success' : 'secondary'"
               styleClass="text-xs"
             />
           </div>
@@ -207,19 +226,24 @@
         <!-- Statut -->
         <td class="px-4 py-3">
           <p-tag
-            [value]="getStatutLabel(patient.statut_suivi)"
-            [severity]="getStatutSeverity(patient.statut_suivi)"
+            [value]="getStatutLabel(patient.followUpStatus || 'actif')"
+            [severity]="getStatutSeverity(patient.followUpStatus || 'actif')"
           />
         </td>
 
         <!-- Dernière visite -->
         <td class="px-4 py-3 hidden xl:table-cell">
-          <p class="text-gray-900">{{ patient.derniere_visite | date : 'dd/MM/yyyy' }}</p>
-          <p class="text-xs text-gray-500">{{ getRelativeTime(patient.derniere_visite) }}</p>
+          <p class="text-gray-900" *ngIf="patient.lastVisitDate">
+            {{ patient.lastVisitDate | date : 'dd/MM/yyyy' }}
+          </p>
+          <p class="text-xs text-gray-500" *ngIf="patient.lastVisitDate">
+            {{ getRelativeTime(patient.lastVisitDate) }}
+          </p>
+          <p class="text-gray-400" *ngIf="!patient.lastVisitDate">—</p>
         </td>
 
         <!-- Actions -->
-        <td class="px-4 py-3">
+        <td class="px-4 py-3" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-end gap-2">
             <p-button
               icon="pi pi-eye"
@@ -244,9 +268,10 @@
               [text]="true"
               [rounded]="true"
               severity="success"
-              pTooltip="Téléconsultation"
+              pTooltip="Appeler"
               tooltipPosition="left"
               (onClick)="callPatient(patient)"
+              [disabled]="!patient.phoneNumber"
             />
           </div>
         </td>
@@ -266,15 +291,16 @@
                 {{
                   searchTerm || selectedStatut || selectedClassification
                     ? 'Essayez de modifier vos filtres'
-                    : 'Commencez par ajouter un nouveau patient'
+                    : 'Les patients apparaîtront ici une fois enregistrés'
                 }}
               </p>
             </div>
             <p-button
-              *ngIf="!searchTerm && !selectedStatut && !selectedClassification"
-              label="Ajouter un patient"
-              icon="pi pi-plus"
-              (onClick)="onNewPatient()"
+              *ngIf="searchTerm || selectedStatut || selectedClassification"
+              label="Réinitialiser les filtres"
+              icon="pi pi-filter-slash"
+              [outlined]="true"
+              (onClick)="resetFilters()"
             />
           </div>
         </td>

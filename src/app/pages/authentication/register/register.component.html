@@ -126,7 +126,7 @@
       </div>
       <!-- Région -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="flex flex-col gap-2 md:col-span-2">
+        <div class="flex flex-col gap-2">
           <label for="region" class="text-sm font-semibold text-gray-700">
             Région <span class="text-red-500">*</span>
           </label>
@@ -136,6 +136,57 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Sélectionnez la région"
+            styleClass="w-full"
+          />
+        </div>
+
+        <!-- Commune -->
+        <div class="flex flex-col gap-2">
+          <label for="commune" class="text-sm font-semibold text-gray-700">
+            Commune <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            formControlName="commune"
+            [options]="getCommunes()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez la commune"
+            styleClass="w-full"
+            [disabled]="!selectedRegion"
+          />
+        </div>
+      </div>
+
+      <!-- Quartier -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label for="quartier" class="text-sm font-semibold text-gray-700">
+            Quartier <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            formControlName="quartier"
+            [options]="getQuartiers()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez le quartier"
+            styleClass="w-full"
+            [disabled]="!selectedCommune"
+          />
+        </div>
+      </div>
+
+      <!-- Centre de santé -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label for="health_center" class="text-sm font-semibold text-gray-700">
+            Centre de santé <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            formControlName="health_center"
+            [options]="centres"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez le centre de santé"
             styleClass="w-full"
           />
         </div>
@@ -198,6 +249,10 @@
               </ul>
             </div>
           </div>
+        </div>
+        <div class="flex justify-center p-4 mt-6">
+          <p-checkbox formControlName="dataConsent" [binary]="true" name="dataConsent" inputId="dataConsent" />
+          <label for="dataConsent" class="ml-2"> J'accepte les conditions d'utilisation </label>
         </div>
         <div class="flex justify-center pt-4">
           <p-button

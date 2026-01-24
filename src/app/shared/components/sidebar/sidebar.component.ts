@@ -23,7 +23,7 @@ export class SidebarComponent {
     { label: 'Tableau de bord', icon: 'pi pi-chart-line', route: '/admin/dashboard' },
     { label: 'Patients', icon: 'pi pi-users', route: '/admin/patients' },
     { label: 'Foyers', icon: 'pi pi-home', route: '/admin/households' },
-    { label: 'ACS', icon: 'pi pi-id-card', route: '/admin/workers' },
+    { label: 'Personnel', icon: 'pi pi-id-card', route: '/admin/workers' },
     { label: 'Consultations', icon: 'pi pi-building', route: '/admin/screenings' },
   ];
 

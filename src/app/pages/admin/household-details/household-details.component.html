@@ -1,0 +1,403 @@
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Colonne principale -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- Informations du ménage -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-900">Informations du ménage</h2>
+          <p-button
+            icon="pi pi-pencil"
+            label="Modifier"
+            size="small"
+            [outlined]="true"
+            (onClick)="editHousehold()"
+          />
+        </div>
+      </ng-template>
+      <ng-template pTemplate="content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <span class="block text-sm font-medium text-gray-700 mb-1">Localisation</span>
+            <div class="flex items-start gap-2">
+              <i class="pi pi-map-marker text-gray-400 mt-1"></i>
+              <div>
+                <p class="text-gray-900">{{ household?.location || 'Non renseigné' }}</p>
+                <p class="text-sm text-gray-500">{{ household?.commune }}, {{ household?.district }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="block text-sm font-medium text-gray-700 mb-1">Contact du chef de ménage</span>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-phone text-gray-400"></i>
+              <span class="text-gray-900">{{ household?.headOfHouseHoldContact || 'Non renseigné' }}</span>
+            </div>
+          </div>
+
+          <div>
+            <span class="block text-sm font-medium text-gray-700 mb-1">ACS Assigné</span>
+            <div class="flex items-start gap-2">
+              <i class="pi pi-user text-gray-400 mt-1"></i>
+              <div>
+                <p class="text-gray-900 font-medium">{{ household?.workerName || 'Non assigné' }}</p>
+                <p class="text-sm text-gray-500">ID: {{ household?.workerId }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="block text-sm font-medium text-gray-700 mb-1">Distance centre de santé</span>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-clock text-gray-400"></i>
+              <span class="text-gray-900">{{ household?.timeToNearestHealthCenterMinutes || '?' }} minutes</span>
+            </div>
+          </div>
+        </div>
+
+        <p-divider />
+
+        <!-- Informations sur l'habitat -->
+        <h3 class="text-md font-semibold text-gray-800 mb-4">Conditions de vie</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-blue-50 p-3 rounded-lg text-center">
+            <i class="pi pi-sun text-blue-500 text-xl mb-2"></i>
+            <p class="text-xs text-gray-500">Type d'eau</p>
+            <p class="text-sm font-medium text-gray-900">{{ household?.typeOfWater || 'N/A' }}</p>
+          </div>
+          <div class="bg-green-50 p-3 rounded-lg text-center">
+            <i class="pi pi-home text-green-500 text-xl mb-2"></i>
+            <p class="text-xs text-gray-500">Type latrine</p>
+            <p class="text-sm font-medium text-gray-900">{{ household?.typeLatrine || 'N/A' }}</p>
+          </div>
+          <div class="bg-yellow-50 p-3 rounded-lg text-center">
+            <i class="pi pi-trash text-yellow-600 text-xl mb-2"></i>
+            <p class="text-xs text-gray-500">Collecte ordures</p>
+            <p class="text-sm font-medium text-gray-900">{{ household?.hasGarbageCollectionService ? 'Oui' : 'Non' }}</p>
+          </div>
+          <div class="bg-purple-50 p-3 rounded-lg text-center">
+            <i class="pi pi-wallet text-purple-500 text-xl mb-2"></i>
+            <p class="text-xs text-gray-500">Dépenses/jour</p>
+            <p class="text-sm font-medium text-gray-900">{{ household?.dailyExpenditure || 'N/A' }} FCFA</p>
+          </div>
+        </div>
+
+        <p-divider />
+
+        <!-- Informations médicales -->
+        <h3 class="text-md font-semibold text-gray-800 mb-4">Suivi médical</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <i class="pi pi-calendar text-gray-400 text-lg"></i>
+            <div>
+              <p class="text-xs text-gray-500">Dernière visite médicale</p>
+              <p class="text-sm font-medium text-gray-900">{{ household?.lastDoctorVisitDate | date : 'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <i class="pi pi-chart-line text-gray-400 text-lg"></i>
+            <div>
+              <p class="text-xs text-gray-500">Visites (12 derniers mois)</p>
+              <p class="text-sm font-medium text-gray-900">{{ household?.doctorVisitsLast12Months || '0' }} visite(s)</p>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Liste des membres -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">Membres du ménage</h2>
+            <p class="text-sm text-gray-500 mt-1">{{ household?.totalMembers || 0 }} personnes</p>
+          </div>
+          <p-button icon="pi pi-plus" label="Ajouter" size="small" (onClick)="addMember()" />
+        </div>
+      </ng-template>
+      <ng-template pTemplate="content">
+        <p-table
+          [value]="household?.members || []"
+          styleClass="p-datatable-sm"
+          [rowHover]="true"
+          [paginator]="(household?.members?.length || 0) > 10"
+          [rows]="10"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th scope="col">Membre</th>
+              <th scope="col" class="hidden md:table-cell">Lien</th>
+              <th scope="col">Âge/Sexe</th>
+              <th scope="col" class="hidden lg:table-cell">Dépistage</th>
+              <th scope="col">Statut</th>
+              <th scope="col" class="text-right">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-member>
+            <tr class="hover:bg-gray-50 cursor-pointer" (click)="viewMemberDetails(member.id)">
+              <td>
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+                    [ngClass]="{
+                      'bg-blue-500': member.sex === 'M',
+                      'bg-pink-500': member.sex === 'F'
+                    }"
+                  >
+                    {{ getMemberInitials(member) }}
+                  </div>
+                  <div>
+                    <p class="text-gray-900 font-medium">
+                      {{ member.firstName }} {{ member.lastName }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      <span *ngIf="member.phoneNumber">{{ member.phoneNumber }}</span>
+                      <span *ngIf="!member.phoneNumber">ID: {{ member.id }}</span>
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td class="hidden md:table-cell">
+                <span class="text-gray-600">{{ member.relationshipToHead || 'Non spécifié' }}</span>
+              </td>
+              <td>
+                <span class="text-gray-900">{{ member.age }} ans</span>
+                <span class="text-gray-500 ml-1">/ {{ member.sex }}</span>
+              </td>
+              <td class="hidden lg:table-cell">
+                <div class="flex flex-col gap-1">
+                  <p-tag
+                    [value]="getScreeningStatus(member)"
+                    [severity]="getScreeningStatusSeverity(member)"
+                    [rounded]="true"
+                  />
+                  <div class="flex gap-1 text-xs" *ngIf="member.filledScreeningForm">
+                    <span
+                      class="px-1.5 py-0.5 rounded"
+                      [ngClass]="{
+                        'bg-red-100 text-red-700': member.htaClassification === 'elevee',
+                        'bg-green-100 text-green-700': member.htaClassification === 'normale'
+                      }"
+                    >
+                      HTA
+                    </span>
+                    <span
+                      class="px-1.5 py-0.5 rounded"
+                      [ngClass]="{
+                        'bg-red-100 text-red-700': member.diabetesClassification === 'elevee',
+                        'bg-green-100 text-green-700': member.diabetesClassification === 'normale'
+                      }"
+                    >
+                      Diabète
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <p-tag
+                  [value]="getFollowUpStatusLabel(member.followUpStatus)"
+                  [severity]="getFollowUpStatusSeverity(member.followUpStatus)"
+                />
+              </td>
+              <td class="text-right" (click)="$event.stopPropagation()">
+                <p-button
+                  icon="pi pi-eye"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="info"
+                  size="small"
+                  pTooltip="Voir détails"
+                  (onClick)="viewMemberDetails(member.id)"
+                />
+                <p-button
+                  icon="pi pi-pencil"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="secondary"
+                  size="small"
+                  pTooltip="Modifier"
+                  (onClick)="editMember(member.id)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="danger"
+                  size="small"
+                  pTooltip="Supprimer"
+                  (onClick)="confirmDeleteMember(member.id)"
+                />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="text-center py-8">
+                <i class="pi pi-users text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-500">Aucun membre dans ce ménage</p>
+                <p-button
+                  label="Ajouter un membre"
+                  icon="pi pi-plus"
+                  size="small"
+                  class="mt-3"
+                  (onClick)="addMember()"
+                />
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <!-- Colonne latérale -->
+  <div class="space-y-6">
+    <!-- Statistiques du ménage -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Statistiques</h2>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="content">
+        <div class="space-y-4">
+          <!-- Membres -->
+          <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <i class="pi pi-users text-white"></i>
+              </div>
+              <span class="text-gray-700">Total membres</span>
+            </div>
+            <span class="text-2xl font-bold text-blue-600">{{ household?.totalMembers || 0 }}</span>
+          </div>
+
+          <!-- Dépistés -->
+          <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <i class="pi pi-check-circle text-white"></i>
+              </div>
+              <span class="text-gray-700">Dépistés</span>
+            </div>
+            <span class="text-2xl font-bold text-green-600">{{ household?.membersScreened || 0 }}</span>
+          </div>
+
+          <!-- À risque -->
+          <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-white"></i>
+              </div>
+              <span class="text-gray-700">À risque</span>
+            </div>
+            <span class="text-2xl font-bold text-red-600">{{ household?.membersAtRisk || 0 }}</span>
+          </div>
+
+          <!-- Progression -->
+          <div class="mt-4">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-600">Progression dépistage</span>
+              <!-- <span class="font-medium text-gray-900">
+                {{ household?.totalMembers ? ((household?.membersScreened || 0) / household?.totalMembers * 100 | number:'1.0-0') : 0 }}%
+              </span> -->
+              <span class="font-medium text-gray-900">
+                0 %
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <!-- <div
+                class="bg-green-500 h-2.5 rounded-full transition-all duration-300"
+                [style.width.%]="household?.totalMembers ? ((household?.membersScreened || 0) / household?.totalMembers * 100) : 0"
+              ></div> -->
+              <div
+                class="bg-green-500 h-2.5 rounded-full transition-all duration-300"
+                [style.width.%]="10"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Actions rapides -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Actions rapides</h2>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="content">
+        <div class="flex flex-col gap-3">
+          <p-button
+            label="Ajouter un membre"
+            icon="pi pi-user-plus"
+            styleClass="w-full"
+            (onClick)="addMember()"
+          />
+          <p-button
+            label="Modifier le ménage"
+            icon="pi pi-pencil"
+            styleClass="w-full"
+            [outlined]="true"
+            (onClick)="editHousehold()"
+          />
+          <p-button
+            label="Exporter les données"
+            icon="pi pi-download"
+            styleClass="w-full"
+            [outlined]="true"
+            severity="secondary"
+          />
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Formulaires complétés -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Formulaires</h2>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="content">
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600 text-sm">Sensibilisation</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium">
+                {{ getAwarenessFormCount() }}
+                / {{ household?.totalMembers || 0 }}
+              </span>
+              <i
+                class="pi text-sm"
+                [ngClass]="{
+                  'pi-check-circle text-green-500': getAwarenessFormCount() === household?.totalMembers,
+                  'pi-clock text-yellow-500': getAwarenessFormCount() !== household?.totalMembers
+                }"
+              ></i>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600 text-sm">Dépistage</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium">
+                {{ getScreeningFormCount() }}
+                / {{ household?.totalMembers || 0 }}
+              </span>
+              <i
+                class="pi text-sm"
+                [ngClass]="{
+                  'pi-check-circle text-green-500': getScreeningFormCount() === household?.totalMembers,
+                  'pi-clock text-yellow-500': getScreeningFormCount() !== household?.totalMembers
+                }"
+              ></i>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+</div>

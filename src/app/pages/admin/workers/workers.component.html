@@ -1,1 +1,461 @@
-<p>workers works!</p>
+<div class="mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Utilisateurs</h1>
+      <p class="text-gray-600 mt-1">Gestion des agents de santé et personnel médical</p>
+    </div>
+    <!-- <p-button
+      label="Nouvel utilisateur"
+      icon="pi pi-plus"
+      severity="primary"
+    /> -->
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Total Utilisateurs</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getTotalUsers() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-users text-blue-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Utilisateurs Actifs</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getActiveUsers() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-check-circle text-green-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Agents Communautaires</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getACSCount() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-id-card text-purple-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Personnel Médical</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getMedicalStaffCount() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-heart text-red-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <!-- Table Toolbar -->
+  <div class="p-4 md:p-6 border-b border-gray-200">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <!-- Search -->
+      <div class="flex-1">
+        <input
+          pInputText
+          type="text"
+          placeholder="Rechercher (nom, email, téléphone, district)..."
+          class="w-full"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+        />
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-2">
+        <p-select
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          placeholder="Statut"
+          [showClear]="true"
+          styleClass="w-full md:w-32"
+          (onChange)="onFilter()"
+        />
+
+        <p-select
+          [options]="roleOptions"
+          [(ngModel)]="selectedRole"
+          placeholder="Rôle"
+          [showClear]="true"
+          styleClass="w-full md:w-44"
+          (onChange)="onFilter()"
+        />
+
+        <p-select
+          [options]="regionOptions"
+          [(ngModel)]="selectedRegion"
+          placeholder="Région"
+          [showClear]="true"
+          styleClass="w-full md:w-36"
+          (onChange)="onFilter()"
+        />
+
+        <p-button
+          icon="pi pi-filter-slash"
+          [text]="true"
+          severity="secondary"
+          pTooltip="Réinitialiser les filtres"
+          (onClick)="resetFilters()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <p-table
+    [value]="filteredUsers()"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 20, 50]"
+    [loading]="loading()"
+    styleClass="p-datatable-sm"
+    [rowHover]="true"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th scope="col" class="px-4 py-3">Utilisateur</th>
+        <th scope="col" class="px-4 py-3">Rôle</th>
+        <th scope="col" class="px-4 py-3 hidden md:table-cell">Contact</th>
+        <th scope="col" class="px-4 py-3 hidden lg:table-cell">Localisation</th>
+        <th scope="col" class="px-4 py-3 hidden xl:table-cell">Activité</th>
+        <th scope="col" class="px-4 py-3">Statut</th>
+        <th scope="col" class="px-4 py-3 text-right">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-user>
+      <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewUser(user)">
+        <!-- Utilisateur -->
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white"
+              [ngClass]="{
+                'bg-red-500': user.role === 'admin',
+                'bg-amber-500': user.role === 'supervisor',
+                'bg-blue-500': user.role === 'medecin',
+                'bg-green-500': user.role === 'infirmier',
+                'bg-purple-500': user.role === 'acs'
+              }"
+            >
+              {{ getUserInitials(user) }}
+            </div>
+            <div class="min-w-0">
+              <p class="font-semibold text-gray-900 truncate">{{ getFullName(user) }}</p>
+              <p class="text-sm text-gray-500 truncate">{{ user.title || user.roleLabel }}</p>
+            </div>
+          </div>
+        </td>
+
+        <!-- Rôle -->
+        <td class="px-4 py-3">
+          <p-tag
+            [value]="user.roleLabel"
+            [severity]="getRoleSeverity(user.role)"
+            [icon]="'pi ' + getRoleIcon(user.role)"
+          />
+        </td>
+
+        <!-- Contact -->
+        <td class="px-4 py-3 hidden md:table-cell" (click)="$event.stopPropagation()">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-envelope text-gray-400 text-sm"></i>
+              <a [href]="'mailto:' + user.email" class="text-gray-700 hover:text-blue-600 text-sm truncate max-w-[180px]">
+                {{ user.email }}
+              </a>
+            </div>
+            <div class="flex items-center gap-2" *ngIf="user.phone_number">
+              <i class="pi pi-phone text-gray-400 text-sm"></i>
+              <a [href]="'tel:' + user.phone_number" class="text-gray-700 hover:text-blue-600 text-sm">
+                {{ user.phone_number }}
+              </a>
+            </div>
+          </div>
+        </td>
+
+        <!-- Localisation -->
+        <td class="px-4 py-3 hidden lg:table-cell">
+          <div class="space-y-1">
+            <p class="text-gray-900 text-sm font-medium" *ngIf="user.region">
+              <i class="pi pi-map-marker text-gray-400 mr-1"></i>
+              {{ user.region }}
+            </p>
+            <p class="text-gray-500 text-sm" *ngIf="user.district">
+              {{ user.district }}
+            </p>
+          </div>
+        </td>
+
+        <!-- Activité -->
+        <td class="px-4 py-3 hidden xl:table-cell">
+          <div class="space-y-1" *ngIf="user.role === 'acs'">
+            <p class="text-sm text-gray-700">
+              <span class="font-semibold">{{ user.householdsCount }}</span> ménages
+            </p>
+            <p class="text-sm text-gray-700">
+              <span class="font-semibold">{{ user.screeningsCount }}</span> dépistages
+            </p>
+          </div>
+          <p class="text-sm text-gray-500" *ngIf="user.role !== 'acs'">
+            {{ getRelativeTime(user.last_access) }}
+          </p>
+        </td>
+
+        <!-- Statut -->
+        <td class="px-4 py-3">
+          <p-tag
+            [value]="getStatusLabel(user.status)"
+            [severity]="getStatusSeverity(user.status)"
+          />
+        </td>
+
+        <!-- Actions -->
+        <td class="px-4 py-3" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-end gap-1">
+            <p-button
+              icon="pi pi-eye"
+              [text]="true"
+              [rounded]="true"
+              severity="info"
+              pTooltip="Voir profil"
+              tooltipPosition="left"
+              (onClick)="viewUser(user)"
+            />
+            <p-button
+              icon="pi pi-pencil"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              pTooltip="Modifier"
+              tooltipPosition="left"
+              (onClick)="editUser(user)"
+            />
+            <p-button
+              icon="pi pi-phone"
+              [text]="true"
+              [rounded]="true"
+              severity="success"
+              pTooltip="Appeler"
+              tooltipPosition="left"
+              (onClick)="callUser(user)"
+              [disabled]="!user.phone_number"
+            />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center py-12">
+          <div class="flex flex-col items-center gap-4">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-users text-gray-400 text-4xl"></i>
+            </div>
+            <div>
+              <p class="text-lg font-semibold text-gray-900 mb-1">Aucun utilisateur trouvé</p>
+              <p class="text-gray-500">
+                {{
+                  searchTerm || selectedStatus || selectedRole || selectedRegion
+                    ? 'Essayez de modifier vos filtres'
+                    : 'Les utilisateurs apparaîtront ici'
+                }}
+              </p>
+            </div>
+            <p-button
+              *ngIf="searchTerm || selectedStatus || selectedRole || selectedRegion"
+              label="Réinitialiser les filtres"
+              icon="pi pi-filter-slash"
+              [outlined]="true"
+              (onClick)="resetFilters()"
+            />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modal: Détails Utilisateur -->
+<p-dialog
+  header="Profil utilisateur"
+  [(visible)]="showUserModal"
+  [modal]="true"
+  [style]="{ width: '650px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeUserModal()"
+>
+  <div *ngIf="selectedUser" class="space-y-6">
+    <!-- Header with avatar -->
+    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+      <div
+        class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl text-white"
+        [ngClass]="{
+          'bg-red-500': selectedUser.role === 'admin',
+          'bg-amber-500': selectedUser.role === 'supervisor',
+          'bg-blue-500': selectedUser.role === 'medecin',
+          'bg-green-500': selectedUser.role === 'infirmier',
+          'bg-purple-500': selectedUser.role === 'acs'
+        }"
+      >
+        {{ getUserInitials(selectedUser) }}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-xl font-semibold text-gray-900">{{ getFullName(selectedUser) }}</h3>
+        <p class="text-gray-600">{{ selectedUser.title }}</p>
+        <div class="flex items-center gap-2 mt-2">
+          <p-tag
+            [value]="selectedUser.roleLabel"
+          />
+          <!-- <p-tag
+            [value]="selectedUser.roleLabel"
+            [severity]="getRoleSeverity(selectedUser.role)"
+            [icon]="'pi ' + getRoleIcon(selectedUser.role)"
+          /> -->
+          <p-tag
+            [value]="getStatusLabel(selectedUser.status)"
+            [severity]="getStatusSeverity(selectedUser.status)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Informations de contact</h4>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-3 bg-blue-50 rounded-lg">
+          <div class="flex items-center gap-2 text-blue-600 mb-1">
+            <i class="pi pi-envelope"></i>
+            <span class="text-sm font-medium">Email</span>
+          </div>
+          <a [href]="'mailto:' + selectedUser.email" class="text-blue-900 hover:underline break-all">
+            {{ selectedUser.email }}
+          </a>
+        </div>
+        <div class="p-3 bg-green-50 rounded-lg">
+          <div class="flex items-center gap-2 text-green-600 mb-1">
+            <i class="pi pi-phone"></i>
+            <span class="text-sm font-medium">Téléphone</span>
+          </div>
+          <a [href]="'tel:' + selectedUser.phone_number" class="text-green-900 hover:underline" *ngIf="selectedUser.phone_number">
+            {{ selectedUser.phone_number }}
+          </a>
+          <span class="text-gray-500" *ngIf="!selectedUser.phone_number">Non renseigné</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Information -->
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Affectation</h4>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-3 bg-gray-50 rounded-lg" *ngIf="selectedUser.region">
+          <p class="text-sm text-gray-600">Région</p>
+          <p class="font-semibold text-gray-900">{{ selectedUser.region }}</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg" *ngIf="selectedUser.district">
+          <p class="text-sm text-gray-600">District</p>
+          <p class="font-semibold text-gray-900">{{ selectedUser.district }}</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg" *ngIf="selectedUser.community">
+          <p class="text-sm text-gray-600">Communauté</p>
+          <p class="font-semibold text-gray-900">{{ selectedUser.community }}</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg" *ngIf="selectedUser.health_center">
+          <p class="text-sm text-gray-600">Structure sanitaire</p>
+          <p class="font-semibold text-gray-900">{{ selectedUser.health_center }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Stats (for ACS) -->
+    <div *ngIf="selectedUser.role === 'acs'">
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Statistiques d'activité</h4>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="p-4 bg-purple-50 rounded-lg text-center">
+          <i class="pi pi-home text-purple-600 text-2xl mb-2"></i>
+          <p class="text-2xl font-bold text-purple-900">{{ selectedUser.householdsCount }}</p>
+          <p class="text-sm text-purple-600">Ménages</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-lg text-center">
+          <i class="pi pi-users text-blue-600 text-2xl mb-2"></i>
+          <p class="text-2xl font-bold text-blue-900">{{ selectedUser.patientsCount }}</p>
+          <p class="text-sm text-blue-600">Patients</p>
+        </div>
+        <div class="p-4 bg-green-50 rounded-lg text-center">
+          <i class="pi pi-check-square text-green-600 text-2xl mb-2"></i>
+          <p class="text-2xl font-bold text-green-900">{{ selectedUser.screeningsCount }}</p>
+          <p class="text-sm text-green-600">Dépistages</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supervisor -->
+    <div *ngIf="selectedUser.supervisorName">
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Superviseur</h4>
+      <div class="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
+        <i class="pi pi-user text-amber-600 text-xl"></i>
+        <span class="font-medium text-amber-900">{{ selectedUser.supervisorName }}</span>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- Meta Information -->
+    <div class="flex items-center justify-between text-sm text-gray-500">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-calendar"></i>
+        <span>Inscrit le {{ selectedUser.created_at | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="flex items-center gap-2" *ngIf="selectedUser.last_access">
+        <i class="pi pi-clock"></i>
+        <span>Dernière connexion: {{ getRelativeTime(selectedUser.last_access) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between">
+      <div class="flex gap-2">
+        <p-button
+          label="Appeler"
+          icon="pi pi-phone"
+          severity="success"
+          [outlined]="true"
+          (onClick)="callUser(selectedUser!)"
+          [disabled]="!selectedUser?.phone_number"
+        />
+        <p-button
+          label="Email"
+          icon="pi pi-envelope"
+          severity="info"
+          [outlined]="true"
+          (onClick)="emailUser(selectedUser!)"
+        />
+      </div>
+      <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeUserModal()" />
+    </div>
+  </ng-template>
+</p-dialog>

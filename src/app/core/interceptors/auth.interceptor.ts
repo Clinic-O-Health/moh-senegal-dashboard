@@ -15,15 +15,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Liste des URLs qui ne nécessitent pas de token
   const publicUrls = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/password/request'];
-  const isPublicUrl = publicUrls.some(url => req.url.includes(url));
+  const isPublicUrl = publicUrls.some((url) => req.url.includes(url));
 
   // Cloner la requête et ajouter le token si disponible et nécessaire
   let authReq = req;
   if (token && !isPublicUrl) {
     authReq = req.clone({
       setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
   }
 
@@ -40,7 +40,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             url: req.url.replace(/\/users\/me.*/, '/auth/refresh'),
             method: 'POST',
             body: { refresh_token: refreshToken },
-            headers: req.headers.delete('Authorization')
+            headers: req.headers.delete('Authorization'),
           });
 
           // Utiliser l'URL correcte pour le refresh
@@ -52,7 +52,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               url: refreshUrl,
               method: 'POST',
               body: { refresh_token: refreshToken },
-              headers: req.headers.delete('Authorization')
+              headers: req.headers.delete('Authorization'),
             })
           ).pipe(
             switchMap((response: any) => {
@@ -64,8 +64,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                 // Retry la requête originale avec le nouveau token
                 const retryReq = req.clone({
                   setHeaders: {
-                    Authorization: `Bearer ${response.data.access_token}`
-                  }
+                    Authorization: `Bearer ${response.data.access_token}`,
+                  },
                 });
                 return next(retryReq);
               }
@@ -74,16 +74,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               handleLogout(router);
               return throwError(() => error);
             }),
-            catchError(refreshError => {
+            catchError((refreshError) => {
               // Si le refresh échoue, déconnecter
               handleLogout(router);
               return throwError(() => refreshError);
             })
           );
-        } else {
-          // Pas de refresh token, déconnecter
-          handleLogout(router);
         }
+        // Pas de refresh token, déconnecter
+        if (!isPublicUrl) handleLogout(router);
       }
 
       return throwError(() => error);
@@ -93,51 +92,5 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 function handleLogout(router: Router): void {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
-  router.navigate(['/authorisation/login']);
+  router.navigate(['/authentication/login']);
 }
-// import { HttpInterceptorFn } from '@angular/common/http';
-// import { inject } from '@angular/core';
-// import { AuthService } from '../services/auth.service';
-// import { catchError, switchMap, throwError } from 'rxjs';
-
-// export const authInterceptor: HttpInterceptorFn = (req, next) => {
-//   const authService = inject(AuthService);
-//   const token = authService.getAccessToken();
-
-//   // Cloner la requête et ajouter le token si disponible
-//   let authReq = req;
-//   if (token && !req.url.includes('/auth/login') && !req.url.includes('/auth/refresh')) {
-//     authReq = req.clone({
-//       setHeaders: {
-//         Authorization: `Bearer ${token}`
-//       }
-//     });
-//   }
-
-//   return next(authReq).pipe(
-//     catchError(error => {
-//       // Si erreur 401, tenter de rafraîchir le token
-//       if (error.status === 401 && !req.url.includes('/auth/refresh')) {
-//         return authService.refreshToken().pipe(
-//           switchMap(() => {
-//             // Récupérer le nouveau token
-//             const newToken = authService.getAccessToken();
-//             const retryReq = req.clone({
-//               setHeaders: {
-//                 Authorization: `Bearer ${newToken}`
-//               }
-//             });
-//             return next(retryReq);
-//           }),
-//           catchError(refreshError => {
-//             // Si le rafraîchissement échoue, déconnecter
-//             authService.logout();
-//             return throwError(() => refreshError);
-//           })
-//         );
-//       }
-
-//       return throwError(() => error);
-//     })
-//   );
-// };

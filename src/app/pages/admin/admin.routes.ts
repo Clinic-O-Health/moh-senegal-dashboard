@@ -6,6 +6,7 @@ import { WorkersComponent } from './workers/workers.component';
 import { ScreeningsComponent } from './screenings/screenings.component';
 import { PatientDetailsComponent } from './patient-details/patient-details.component';
 import { HouseholdsComponent } from './households/households.component';
+import { HouseholdDetailsComponent } from './household-details/household-details.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -36,6 +37,10 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'households',
         component: HouseholdsComponent,
+      },
+      {
+        path: 'household-details/:id',
+        component: HouseholdDetailsComponent,
       },
       {
         path: 'patient/:id',

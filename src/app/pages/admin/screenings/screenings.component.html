@@ -1,1 +1,734 @@
-<p>screenings works!</p>
+<div class="mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Examens</h1>
+      <p class="text-gray-600 mt-1">Prédépistage et dépistages HTA/Diabète</p>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Total Examens</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getTotalScreenings() }}</p>
+      </div>
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-clipboard text-blue-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Prédépistages</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getRiskTestsCount() }}</p>
+        <p class="text-xs text-orange-600 mt-1">{{ getHighRiskCount() }} à risque élevé</p>
+      </div>
+      <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-search text-purple-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Dépistages HTA</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getHTACount() }}</p>
+        <p class="text-xs text-red-600 mt-1">{{ getHTAElevatedCount() }} tension élevée</p>
+      </div>
+      <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-heart text-red-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 font-medium">Dépistages Diabète</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getDiabeteCount() }}</p>
+        <p class="text-xs text-red-600 mt-1">{{ getDiabeteElevatedCount() }} glycémie élevée</p>
+      </div>
+      <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+        <i class="pi pi-chart-line text-amber-600 text-2xl"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <p-tabs value="0">
+    <p-tablist>
+      <p-tab value="0">
+        <i class="pi pi-search mr-2"></i>
+        Prédépistages ({{ getRiskTestsCount() }})
+      </p-tab>
+      <p-tab value="1">
+        <i class="pi pi-heart mr-2"></i>
+        Dépistages HTA ({{ getHTACount() }})
+      </p-tab>
+      <p-tab value="2">
+        <i class="pi pi-chart-line mr-2"></i>
+        Dépistages Diabète ({{ getDiabeteCount() }})
+      </p-tab>
+    </p-tablist>
+
+    <!-- Tab 1: Prédépistages (RiskTests) -->
+    <p-tabpanel value="0">
+      <div class="p-4 border-b border-gray-200">
+        <div class="flex flex-col md:flex-row md:items-center gap-4">
+          <div class="flex-1">
+            <input
+              pInputText
+              type="text"
+              placeholder="Rechercher (patient, ACS, type)..."
+              class="w-full"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchRiskTests()"
+            />
+          </div>
+          <div class="flex gap-2">
+            <p-select
+              [options]="riskLevelOptions"
+              [(ngModel)]="selectedRiskLevel"
+              placeholder="Niveau de risque"
+              [showClear]="true"
+              styleClass="w-full md:w-44"
+              (onChange)="applyRiskTestFilters()"
+            />
+            <p-button
+              icon="pi pi-filter-slash"
+              [text]="true"
+              severity="secondary"
+              pTooltip="Réinitialiser"
+              (onClick)="resetRiskTestFilters()"
+            />
+          </div>
+        </div>
+      </div>
+
+      <p-table
+        [value]="filteredRiskTests()"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        [loading]="loading()"
+        styleClass="p-datatable-sm"
+        [rowHover]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col" class="px-4 py-3">Patient</th>
+            <th scope="col" class="px-4 py-3 hidden md:table-cell">Type</th>
+            <th scope="col" class="px-4 py-3">Niveau de risque</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">ACS</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Date</th>
+            <th scope="col" class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-rt>
+          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewRiskTest(rt)">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
+                  [ngClass]="{
+                    'bg-blue-100 text-blue-700': rt.patientSex === 'M',
+                    'bg-pink-100 text-pink-700': rt.patientSex === 'F'
+                  }"
+                >
+                  {{ getPatientInitials(rt.patientName) }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900">{{ rt.patientName }}</p>
+                  <p class="text-sm text-gray-500">{{ rt.patientAge }} ans</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3 hidden md:table-cell">
+              <p-tag
+                [value]="rt.testtype"
+                [severity]="rt.testtype === 'Hypertension' ? 'danger' : 'warn'"
+              />
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <p-tag
+                  [value]="getRiskLevelLabel(rt.risklevel) + ' (' + rt.risklevel + ')'"
+                  [severity]="getRiskLevelSeverity(rt.risklevel)"
+                />
+              </div>
+            </td>
+            <td class="px-4 py-3 hidden lg:table-cell">
+              <span class="text-gray-700">{{ rt.workerName }}</span>
+            </td>
+            <td class="px-4 py-3 hidden lg:table-cell">
+              <span class="text-gray-700">{{ rt.testdate }}</span>
+            </td>
+            <td class="px-4 py-3" (click)="$event.stopPropagation()">
+              <div class="flex items-center justify-end gap-2">
+                <p-button
+                  icon="pi pi-eye"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="info"
+                  pTooltip="Voir détails"
+                  (onClick)="viewRiskTest(rt)"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-12">
+              <div class="flex flex-col items-center gap-4">
+                <i class="pi pi-search text-gray-300 text-5xl"></i>
+                <p class="text-gray-500">Aucun prédépistage trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabpanel>
+
+    <!-- Tab 2: Dépistages HTA -->
+    <p-tabpanel value="1">
+      <div class="p-4 border-b border-gray-200">
+        <div class="flex flex-col md:flex-row md:items-center gap-4">
+          <div class="flex-1">
+            <input
+              pInputText
+              type="text"
+              placeholder="Rechercher (patient, ACS)..."
+              class="w-full"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchHTA()"
+            />
+          </div>
+          <div class="flex gap-2">
+            <p-select
+              [options]="gradeOptions"
+              [(ngModel)]="selectedHTAGrade"
+              placeholder="Résultat"
+              [showClear]="true"
+              styleClass="w-full md:w-36"
+              (onChange)="applyHTAFilters()"
+            />
+            <p-button
+              icon="pi pi-filter-slash"
+              [text]="true"
+              severity="secondary"
+              pTooltip="Réinitialiser"
+              (onClick)="resetHTAFilters()"
+            />
+          </div>
+        </div>
+      </div>
+
+      <p-table
+        [value]="filteredScreeningsHTA()"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        [loading]="loading()"
+        styleClass="p-datatable-sm"
+        [rowHover]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col" class="px-4 py-3">Patient</th>
+            <th scope="col" class="px-4 py-3">Tension moyenne</th>
+            <th scope="col" class="px-4 py-3">Grade</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Antécédent</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">ACS</th>
+            <th scope="col" class="px-4 py-3 hidden xl:table-cell">Date</th>
+            <th scope="col" class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-screening>
+          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewScreeningHTA(screening)">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
+                  [ngClass]="{
+                    'bg-blue-100 text-blue-700': screening.patientSex === 'M',
+                    'bg-pink-100 text-pink-700': screening.patientSex === 'F'
+                  }"
+                >
+                  {{ getPatientInitials(screening.patientName) }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900">{{ screening.patientName }}</p>
+                  <p class="text-sm text-gray-500">{{ screening.patientAge }} ans</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-heart-fill" [ngClass]="screening.flag === 0 ? 'text-green-500' : 'text-red-500'"></i>
+                <span class="font-semibold" [ngClass]="screening.flag === 0 ? 'text-green-700' : 'text-red-700'">
+                  {{ screening.sys_avarage }}/{{ screening.dias_avarage }} mmHg
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <p-tag
+                [value]="screening.grade || 'N/A'"
+                [severity]="getHTASeverity(screening.flag)"
+              />
+            </td>
+            <td class="px-4 py-3 hidden lg:table-cell">
+              <p-tag
+                [value]="screening.didhavethedisease === 'Oui' ? 'Oui' : 'Non'"
+                [severity]="screening.didhavethedisease === 'Oui' ? 'warn' : 'secondary'"
+                styleClass="text-xs"
+              />
+            </td>
+            <td class="px-4 py-3 hidden lg:table-cell">
+              <span class="text-gray-700">{{ screening.workerName }}</span>
+            </td>
+            <td class="px-4 py-3 hidden xl:table-cell">
+              <span class="text-gray-700">{{ screening.registrationdate | date:'dd/MM/yyyy' }}</span>
+            </td>
+            <td class="px-4 py-3" (click)="$event.stopPropagation()">
+              <div class="flex items-center justify-end gap-2">
+                <p-button
+                  icon="pi pi-eye"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="info"
+                  pTooltip="Voir détails"
+                  (onClick)="viewScreeningHTA(screening)"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-12">
+              <div class="flex flex-col items-center gap-4">
+                <i class="pi pi-heart text-gray-300 text-5xl"></i>
+                <p class="text-gray-500">Aucun dépistage HTA trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabpanel>
+
+    <!-- Tab 3: Dépistages Diabète -->
+    <p-tabpanel value="2">
+      <div class="p-4 border-b border-gray-200">
+        <div class="flex flex-col md:flex-row md:items-center gap-4">
+          <div class="flex-1">
+            <input
+              pInputText
+              type="text"
+              placeholder="Rechercher (patient, ACS)..."
+              class="w-full"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchDiabete()"
+            />
+          </div>
+          <div class="flex gap-2">
+            <p-select
+              [options]="gradeOptions"
+              [(ngModel)]="selectedDiabeteGrade"
+              placeholder="Résultat"
+              [showClear]="true"
+              styleClass="w-full md:w-36"
+              (onChange)="applyDiabeteFilters()"
+            />
+            <p-button
+              icon="pi pi-filter-slash"
+              [text]="true"
+              severity="secondary"
+              pTooltip="Réinitialiser"
+              (onClick)="resetDiabeteFilters()"
+            />
+          </div>
+        </div>
+      </div>
+
+      <p-table
+        [value]="filteredScreeningsDiabete()"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        [loading]="loading()"
+        styleClass="p-datatable-sm"
+        [rowHover]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col" class="px-4 py-3">Patient</th>
+            <th scope="col" class="px-4 py-3">Glycémie</th>
+            <th scope="col" class="px-4 py-3">Grade</th>
+            <th scope="col" class="px-4 py-3 hidden md:table-cell">À jeun</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Antécédent</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">ACS</th>
+            <th scope="col" class="px-4 py-3 hidden xl:table-cell">Date</th>
+            <th scope="col" class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-screening>
+          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewScreeningDiabete(screening)">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
+                  [ngClass]="{
+                    'bg-blue-100 text-blue-700': screening.patientSex === 'M',
+                    'bg-pink-100 text-pink-700': screening.patientSex === 'F'
+                  }"
+                >
+                  {{ getPatientInitials(screening.patientName) }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900">{{ screening.patientName }}</p>
+                  <p class="text-sm text-gray-500">{{ screening.patientAge }} ans</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-chart-line" [ngClass]="screening.flag === 0 ? 'text-green-500' : 'text-red-500'"></i>
+                <span class="font-semibold" [ngClass]="screening.flag === 0 ? 'text-green-700' : 'text-red-700'">
+                  {{ screening.glucose_level }} g/L
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <p-tag
+                [value]="screening.grade || 'N/A'"
+                [severity]="getDiabeteSeverity(screening.flag)"
+              />
+            </td>
+            <td class="px-4 py-3 hidden md:table-cell">
+              <p-tag
+                [value]="screening.eatornot === 'Non' ? 'Oui' : 'Non'"
+                [severity]="screening.eatornot === 'Non' ? 'info' : 'secondary'"
+                styleClass="text-xs"
+              />
+            </td>
+            <td class="px-4 py-3 hidden lg:table-cell">
+              <p-tag
+                [value]="screening.didhavethedisease === 'Oui' ? 'Oui' : 'Non'"
+                [severity]="screening.didhavethedisease === 'Oui' ? 'warn' : 'secondary'"
+                styleClass="text-xs"
+              />
+            </td>
+            <td class="px-4 py-3 hidden lg:table-cell">
+              <span class="text-gray-700">{{ screening.workerName }}</span>
+            </td>
+            <td class="px-4 py-3 hidden xl:table-cell">
+              <span class="text-gray-700">{{ screening.registrationdate | date:'dd/MM/yyyy' }}</span>
+            </td>
+            <td class="px-4 py-3" (click)="$event.stopPropagation()">
+              <div class="flex items-center justify-end gap-2">
+                <p-button
+                  icon="pi pi-eye"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="info"
+                  pTooltip="Voir détails"
+                  (onClick)="viewScreeningDiabete(screening)"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center py-12">
+              <div class="flex flex-col items-center gap-4">
+                <i class="pi pi-chart-line text-gray-300 text-5xl"></i>
+                <p class="text-gray-500">Aucun dépistage Diabète trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabpanel>
+  </p-tabs>
+</div>
+
+<!-- Modal: Détails Prédépistage (RiskTest) -->
+<p-dialog
+  header="Détails du prédépistage"
+  [(visible)]="showRiskTestModal"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeRiskTestModal()"
+>
+  <div *ngIf="selectedRiskTest" class="space-y-6">
+    <!-- Patient Info -->
+    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
+        [ngClass]="{
+          'bg-blue-100 text-blue-700': selectedRiskTest.patientSex === 'M',
+          'bg-pink-100 text-pink-700': selectedRiskTest.patientSex === 'F'
+        }"
+      >
+        {{ getPatientInitials(selectedRiskTest.patientName) }}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-gray-900">{{ selectedRiskTest.patientName }}</h3>
+        <p class="text-gray-500">{{ selectedRiskTest.patientAge }} ans • {{ selectedRiskTest.patientSex === 'M' ? 'Homme' : 'Femme' }}</p>
+      </div>
+      <p-tag
+        [value]="getRiskLevelLabel(selectedRiskTest.risklevel) + ' (' + selectedRiskTest.risklevel + ')'"
+        [severity]="getRiskLevelSeverity(selectedRiskTest.risklevel)"
+        styleClass="text-sm"
+      />
+    </div>
+
+    <!-- Test Info -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="p-4 bg-purple-50 rounded-lg">
+        <p class="text-sm text-purple-600 font-medium">Type de test</p>
+        <p class="text-lg font-semibold text-purple-900">{{ selectedRiskTest.testtype }}</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-600 font-medium">Date du test</p>
+        <p class="text-lg font-semibold text-gray-900">{{ selectedRiskTest.testdate }}</p>
+      </div>
+    </div>
+
+    <!-- Risk Factors -->
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Facteurs de risque évalués</h4>
+      <div class="grid grid-cols-2 gap-2">
+        <div
+          *ngFor="let factor of parseRiskFactors(selectedRiskTest.testresult)"
+          class="flex items-center gap-2 p-3 rounded-lg"
+          [ngClass]="factor.value ? 'bg-red-50' : 'bg-green-50'"
+        >
+          <i
+            class="pi"
+            [ngClass]="{
+              'pi-times-circle text-red-500': factor.value,
+              'pi-check-circle text-green-500': !factor.value
+            }"
+          ></i>
+          <span [ngClass]="factor.value ? 'text-red-700' : 'text-green-700'">{{ factor.label }}</span>
+        </div>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>{{ selectedRiskTest.workerName }}</strong></span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeRiskTestModal()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Détails Dépistage HTA -->
+<p-dialog
+  header="Détails du dépistage HTA"
+  [(visible)]="showHTAModal"
+  [modal]="true"
+  [style]="{ width: '650px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeHTAModal()"
+>
+  <div *ngIf="selectedScreeningHTA" class="space-y-6">
+    <!-- Patient Info + Result -->
+    <div class="flex items-center gap-4 p-4 rounded-lg" [ngClass]="selectedScreeningHTA.flag === 0 ? 'bg-green-50' : 'bg-red-50'">
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
+        [ngClass]="{
+          'bg-blue-100 text-blue-700': selectedScreeningHTA.patientSex === 'M',
+          'bg-pink-100 text-pink-700': selectedScreeningHTA.patientSex === 'F'
+        }"
+      >
+        {{ getPatientInitials(selectedScreeningHTA.patientName) }}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-gray-900">{{ selectedScreeningHTA.patientName }}</h3>
+        <p class="text-gray-500">{{ selectedScreeningHTA.patientAge }} ans • {{ selectedScreeningHTA.patientSex === 'M' ? 'Homme' : 'Femme' }}</p>
+      </div>
+      <div class="text-right">
+        <p class="text-3xl font-bold" [ngClass]="selectedScreeningHTA.flag === 0 ? 'text-green-700' : 'text-red-700'">
+          {{ selectedScreeningHTA.sys_avarage }}/{{ selectedScreeningHTA.dias_avarage }}
+        </p>
+        <p class="text-sm" [ngClass]="selectedScreeningHTA.flag === 0 ? 'text-green-600' : 'text-red-600'">mmHg (moyenne)</p>
+      </div>
+    </div>
+
+    <!-- Grade -->
+    <div class="flex justify-center">
+      <p-tag
+        [value]="selectedScreeningHTA.grade || 'N/A'"
+        [severity]="getHTASeverity(selectedScreeningHTA.flag)"
+        styleClass="text-lg px-4 py-2"
+      />
+    </div>
+
+    <!-- Measurements -->
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Mesures détaillées</h4>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600 font-medium mb-2">Bras droit</p>
+          <div class="space-y-1">
+            <p class="text-gray-900"><span class="font-semibold">Systolique:</span> {{ selectedScreeningHTA.armrightsystol }} mmHg</p>
+            <p class="text-gray-900"><span class="font-semibold">Diastolique:</span> {{ selectedScreeningHTA.armrightdiastol }} mmHg</p>
+          </div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600 font-medium mb-2">Bras gauche</p>
+          <div class="space-y-1">
+            <p class="text-gray-900"><span class="font-semibold">Systolique:</span> {{ selectedScreeningHTA.armleftsystol }} mmHg</p>
+            <p class="text-gray-900"><span class="font-semibold">Diastolique:</span> {{ selectedScreeningHTA.armleftdiastol }} mmHg</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="p-4 bg-amber-50 rounded-lg">
+        <p class="text-sm text-amber-600 font-medium">Antécédent d'HTA</p>
+        <p class="text-lg font-semibold text-amber-900">{{ selectedScreeningHTA.didhavethedisease === 'Oui' ? 'Oui' : 'Non' }}</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-600 font-medium">Date du dépistage</p>
+        <p class="text-lg font-semibold text-gray-900">{{ selectedScreeningHTA.registrationdate | date:'dd/MM/yyyy' }}</p>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>{{ selectedScreeningHTA.workerName }}</strong></span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeHTAModal()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Détails Dépistage Diabète -->
+<p-dialog
+  header="Détails du dépistage Diabète"
+  [(visible)]="showDiabeteModal"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeDiabeteModal()"
+>
+  <div *ngIf="selectedScreeningDiabete" class="space-y-6">
+    <!-- Patient Info + Result -->
+    <div class="flex items-center gap-4 p-4 rounded-lg" [ngClass]="selectedScreeningDiabete.flag === 0 ? 'bg-green-50' : 'bg-red-50'">
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
+        [ngClass]="{
+          'bg-blue-100 text-blue-700': selectedScreeningDiabete.patientSex === 'M',
+          'bg-pink-100 text-pink-700': selectedScreeningDiabete.patientSex === 'F'
+        }"
+      >
+        {{ getPatientInitials(selectedScreeningDiabete.patientName) }}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-gray-900">{{ selectedScreeningDiabete.patientName }}</h3>
+        <p class="text-gray-500">{{ selectedScreeningDiabete.patientAge }} ans • {{ selectedScreeningDiabete.patientSex === 'M' ? 'Homme' : 'Femme' }}</p>
+      </div>
+      <div class="text-right">
+        <p class="text-3xl font-bold" [ngClass]="selectedScreeningDiabete.flag === 0 ? 'text-green-700' : 'text-red-700'">
+          {{ selectedScreeningDiabete.glucose_level }}
+        </p>
+        <p class="text-sm" [ngClass]="selectedScreeningDiabete.flag === 0 ? 'text-green-600' : 'text-red-600'">g/L (glycémie)</p>
+      </div>
+    </div>
+
+    <!-- Grade -->
+    <div class="flex justify-center">
+      <p-tag
+        [value]="selectedScreeningDiabete.grade || 'N/A'"
+        [severity]="getDiabeteSeverity(selectedScreeningDiabete.flag)"
+        styleClass="text-lg px-4 py-2"
+      />
+    </div>
+
+    <!-- Test Conditions -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="p-4 bg-blue-50 rounded-lg text-center">
+        <i class="pi pi-clock text-blue-600 text-2xl mb-2"></i>
+        <p class="text-sm text-blue-600 font-medium">À jeun</p>
+        <p class="text-lg font-semibold text-blue-900">{{ selectedScreeningDiabete.eatornot === 'Non' ? 'Oui' : 'Non' }}</p>
+      </div>
+      <div class="p-4 bg-amber-50 rounded-lg text-center">
+        <i class="pi pi-history text-amber-600 text-2xl mb-2"></i>
+        <p class="text-sm text-amber-600 font-medium">Antécédent</p>
+        <p class="text-lg font-semibold text-amber-900">{{ selectedScreeningDiabete.didhavethedisease === 'Oui' ? 'Oui' : 'Non' }}</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-lg text-center">
+        <i class="pi pi-calendar text-gray-600 text-2xl mb-2"></i>
+        <p class="text-sm text-gray-600 font-medium">Date</p>
+        <p class="text-lg font-semibold text-gray-900">{{ selectedScreeningDiabete.registrationdate | date:'dd/MM' }}</p>
+      </div>
+    </div>
+
+    <!-- Reference values -->
+    <div class="p-4 bg-gray-100 rounded-lg">
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Valeurs de référence (à jeun)</h4>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Normal:</span>
+          <span class="font-medium text-green-700">&lt; 1.10 g/L</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Prédiabète:</span>
+          <span class="font-medium text-amber-700">1.10 - 1.25 g/L</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Diabète:</span>
+          <span class="font-medium text-red-700">≥ 1.26 g/L</span>
+        </div>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>{{ selectedScreeningDiabete.workerName }}</strong></span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeDiabeteModal()" />
+  </ng-template>
+</p-dialog>

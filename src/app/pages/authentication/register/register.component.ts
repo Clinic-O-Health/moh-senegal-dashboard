@@ -12,15 +12,28 @@ import { MessageService } from 'primeng/api';
 import { DirectusService } from '@core/services/directus.service';
 import { createUser, isDirectusError, readRoles } from '@directus/sdk';
 import { formatDirectusError } from '@shared/helpers/utils';
+import { CheckboxModule } from 'primeng/checkbox';
 
 interface Role {
   label: string;
   value: string;
 }
 
+interface Quartier {
+  label: string;
+  value: string;
+}
+
+interface Commune {
+  label: string;
+  value: string;
+  quartiers: Quartier[];
+}
+
 interface Region {
   label: string;
   value: string;
+  communes: Commune[];
 }
 
 @Component({
@@ -33,6 +46,7 @@ interface Region {
     InputTextModule,
     PasswordModule,
     SelectModule,
+    CheckboxModule,
     CardModule,
     ToastModule,
   ],
@@ -44,6 +58,10 @@ export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   isLoading = false;
   accountCreated = false;
+
+  selectedRegion: Region | null = null;
+  selectedCommune: Commune | null = null;
+
   roles: Role[] = [
     { label: 'Acteur Communautaire de Santé (ACS)', value: 'ACS' },
     { label: 'Infirmier Chef de Poste (ICP)', value: 'ICP' },
@@ -54,12 +72,108 @@ export class RegisterComponent implements OnInit {
   ];
 
   regions: Region[] = [
-    { label: 'Dakar', value: 'dakar' },
-    { label: 'Thiès', value: 'thies' },
-    { label: 'Saint-Louis', value: 'saint-louis' },
-    { label: 'Diourbel', value: 'diourbel' },
-    { label: 'Kaolack', value: 'kaolack' },
-    { label: 'Ziguinchor', value: 'ziguinchor' },
+    {
+      label: 'Dakar',
+      value: 'dakar',
+      communes: [
+        {
+          label: 'Plateau',
+          value: 'plateau',
+          quartiers: [
+            { label: 'Plateau', value: 'plateau' },
+            { label: 'Mermoz', value: 'mermoz' },
+            { label: 'Sicap-Liberté', value: 'sicap-liberte' },
+          ],
+        },
+        {
+          label: 'Yoff',
+          value: 'yoff',
+          quartiers: [
+            { label: 'Yoff', value: 'yoff' },
+            { label: 'Ouakam', value: 'ouakam' },
+            { label: 'Ngor', value: 'ngor' },
+          ],
+        },
+        {
+          label: 'Pikine',
+          value: 'pikine',
+          quartiers: [
+            { label: 'Pikine Est', value: 'pikine-est' },
+            { label: 'Pikine Ouest', value: 'pikine-ouest' },
+            { label: 'Pikine Centre', value: 'pikine-centre' },
+          ],
+        },
+        {
+          label: 'Guédiawaye',
+          value: 'guediawaye',
+          quartiers: [
+            { label: 'Guédiawaye', value: 'guediawaye' },
+            { label: 'Sam Notaire', value: 'sam-notaire' },
+            { label: 'Wakhinane', value: 'wakhinane' },
+          ],
+        },
+      ],
+    },
+    {
+      label: 'Thiès',
+      value: 'Thiès',
+      communes: [
+        {
+          label: 'Khombole',
+          value: 'Khombole',
+          quartiers: [
+            { label: 'Touba Toulé', value: 'Touba Toulé' },
+            { label: 'Thilla Ounté', value: 'Thilla Ounté' },
+            { label: 'Refane Souf', value: 'Refane Souf' },
+            { label: 'Kaba', value: 'Kaba' },
+            { label: 'Ndouf', value: 'Ndouf' },
+            { label: 'Taiba Ndao', value: 'Taiba Ndao' },
+            { label: 'Babou', value: 'Babou' },
+            { label: 'Ndingler', value: 'Ndingler' },
+            { label: 'Biram Fall', value: 'Biram Fall' },
+            { label: 'Dieyene', value: 'Dieyene' },
+            { label: 'Ngoudiane', value: 'Ngoudiane' },
+            { label: 'Thiarr', value: 'Thiarr' },
+            { label: 'Mbossobe', value: 'Mbossobe' },
+            { label: 'Ndié Ngom', value: 'Ndié Ngom' },
+            { label: 'Darou Ndiaye', value: 'Darou Ndiaye' },
+            { label: 'Keur Banda Niang', value: 'Keur Banda Niang' },
+            { label: 'Diokoul', value: 'Diokoul' },
+            { label: 'Diak', value: 'Diak' },
+            { label: 'Diol Baba', value: 'Diol Baba' },
+            { label: 'Ndionguène', value: 'Ndionguène' },
+            { label: 'Ndiéffoune', value: 'Ndiéffoune' },
+            { label: 'Tigad', value: 'Tigad' },
+          ],
+        },
+      ],
+    },
+  ];
+
+  centres: { label: string; value: string }[] = [
+    { label: 'Le centre de santé de khombole', value: 'Le centre de santé de khombole' },
+    { label: 'Seokhaye', value: 'Seokhaye' },
+    { label: 'Ndoudigne', value: 'Ndoudigne' },
+    { label: 'Thiagave', value: 'Thiagave' },
+    { label: 'Mbourouaille', value: 'Mbourouaille' },
+    { label: 'Diack', value: 'Diack' },
+    { label: 'Mbayang diack', value: 'Mbayang diack' },
+    { label: 'Thienaba', value: 'Thienaba' },
+    { label: 'Keur yaba diop', value: 'Keur yaba diop' },
+    { label: 'Bangadji', value: 'Bangadji' },
+    { label: 'Digyane', value: 'Digyane' },
+    { label: 'Ndouff ndingeler', value: 'Ndouff ndingeler' },
+    { label: 'Ndieyenne sirakh', value: 'Ndieyenne sirakh' },
+    { label: 'Mbewane', value: 'Mbewane' },
+    { label: 'Mboulouctene', value: 'Mboulouctene' },
+    { label: 'Touba toul', value: 'Touba toul' },
+    { label: 'Boss', value: 'Boss' },
+    { label: 'Ndoucoumane', value: 'Ndoucoumane' },
+    { label: 'Keur ibra gueye', value: 'Keur ibra gueye' },
+    { label: 'Bokh', value: 'Bokh' },
+    { label: 'Diakhou', value: 'Diakhou' },
+    { label: 'Kaba', value: 'Kaba' },
+    { label: 'Keur ma Codou', value: 'Keur ma Codou' },
   ];
 
   constructor(
@@ -76,23 +190,16 @@ export class RegisterComponent implements OnInit {
         phone_number: ['', Validators.required],
         role: ['', Validators.required],
         region: ['', Validators.required],
+        commune: ['', Validators.required],
+        quartier: ['', Validators.required],
+        health_center: ['', Validators.required],
         status: ['unverified'],
-        // district: ['', Validators.required],
-        // poste_sante: [''],
-        // site_communautaire: [''],
         password: ['', [Validators.required, Validators.minLength(5)]],
         confirmPassword: ['', Validators.required],
+        dataConsent: [false, Validators.required],
       },
       { validators: this.passwordMatchValidator }
     );
-  }
-  async ngOnInit(): Promise<void> {
-    const roles = await this.directusService.directus.request(readRoles());
-    console.log('Roles from Directus:', roles);
-    this.roles = roles.map((role: any) => ({
-      label: role.name,
-      value: role.id,
-    }));
   }
   passwordMatchValidator(form: FormGroup) {
     const password = form.get('password');
@@ -103,12 +210,46 @@ export class RegisterComponent implements OnInit {
     }
     return null;
   }
+  async ngOnInit() {
+    try {
+      const roles = await this.directusService.directus.request(readRoles());
+      console.log('Roles from Directus:', roles);
+      this.roles = roles.map((role: any) => ({
+        label: role.name,
+        value: role.id,
+      }));
+    } catch (error) {
+      console.error('Error fetching roles from Directus:', error);
+    }
+    // Listen to region changes
+    this.registerForm.get('region')?.valueChanges.subscribe((value) => {
+      this.selectedRegion = this.regions.find((r) => r.value === value) || null;
+      this.selectedCommune = null;
+      this.registerForm.patchValue({ commune: '', quartier: '' });
+    });
+
+    // Listen to commune changes
+    this.registerForm.get('commune')?.valueChanges.subscribe((value) => {
+      if (this.selectedRegion) {
+        this.selectedCommune = this.selectedRegion.communes.find((c) => c.value === value) || null;
+        this.registerForm.patchValue({ quartier: '' });
+      }
+    });
+  }
+  getCommunes(): Commune[] {
+    return this.selectedRegion ? this.selectedRegion.communes : [];
+  }
+
+  getQuartiers(): Quartier[] {
+    return this.selectedCommune ? this.selectedCommune.quartiers : [];
+  }
 
   async onRegister() {
     if (this.registerForm.valid) {
       console.log('Form Values:', this.registerForm.value);
       const formValues = this.registerForm.value;
       delete formValues.confirmPassword;
+      delete formValues.dataConsent;
       this.isLoading = true;
       try {
         const result = await this.directusService.directus.request(createUser(formValues));

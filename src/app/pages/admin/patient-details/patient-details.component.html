@@ -1,1 +1,1327 @@
-<p>patient-details works!</p>
+<!-- Breadcrumb -->
+<nav class="flex mb-6" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1 md:space-x-3">
+    <li>
+      <a [routerLink]="['/menages']" class="text-gray-700 hover:text-indigo-600">
+        <i class="pi pi-home mr-2"></i>Ménages
+      </a>
+    </li>
+    <li>
+      <div class="flex items-center">
+        <i class="pi pi-angle-right text-gray-400 mx-2"></i>
+        <a
+          [routerLink]="['/menages', member?.householdid]"
+          class="text-gray-700 hover:text-indigo-600"
+        >
+          Famille {{ member?.pvh }}
+        </a>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center">
+        <i class="pi pi-angle-right text-gray-400 mx-2"></i>
+        <span class="text-gray-500">{{ member?.firstName }} {{ member?.lastName }}</span>
+      </div>
+    </li>
+  </ol>
+</nav>
+
+<!-- Header avec photo et infos principales -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+  <div class="p-6">
+    <div class="flex flex-col md:flex-row md:items-start gap-6">
+      <!-- Photo / Avatar -->
+      <div class="flex-shrink-0">
+        <div
+          class="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"
+        >
+          <span class="text-white text-5xl font-bold">
+            {{ member?.firstName?.charAt(0) }}{{ member?.lastName?.charAt(0) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Informations principales -->
+      <div class="flex-1">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+              {{ member?.firstName }} {{ member?.lastName }}
+            </h1>
+            <div class="flex flex-wrap items-center gap-3 text-gray-600">
+              <span class="flex items-center gap-2">
+                <i class="pi pi-user text-gray-400"></i>
+                {{ member?.age }} ans ({{ member?.sex }})
+              </span>
+              <span class="flex items-center gap-2">
+                <i class="pi pi-users text-gray-400"></i>
+                {{ member?.relationshipToHead }}
+              </span>
+              <span class="flex items-center gap-2" *ngIf="member?.phoneNumber">
+                <i class="pi pi-phone text-gray-400"></i>
+                {{ member?.phoneNumber }}
+              </span>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <p-button
+              icon="pi pi-pencil"
+              label="Modifier"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="editMember()"
+            />
+            <p-button
+              icon="pi pi-chart-line"
+              label="Nouveau dépistage"
+              (onClick)="newScreening()"
+            />
+          </div>
+        </div>
+
+        <!-- Tags de statut -->
+        <div class="flex flex-wrap gap-2 mb-4">
+          <p-tag
+            *ngIf="member?.followUpStatus"
+            [value]="getStatusLabel(member?.followUpStatus)"
+            [severity]="getStatusSeverity(member?.followUpStatus)"
+            [rounded]="true"
+          />
+          <p-tag
+            *ngIf="member?.htaClassification === 'elevee'"
+            value="HTA Élevée"
+            severity="danger"
+            icon="pi pi-exclamation-triangle"
+            [rounded]="true"
+          />
+          <p-tag
+            *ngIf="member?.diabetesClassification === 'elevee'"
+            value="Diabète Élevé"
+            severity="warn"
+            icon="pi pi-exclamation-triangle"
+            [rounded]="true"
+          />
+          <p-tag
+            *ngIf="!member?.screened"
+            value="Non dépistée"
+            severity="secondary"
+            [rounded]="true"
+          />
+        </div>
+
+        <!-- Métriques rapides -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-blue-50 rounded-lg p-3">
+            <p class="text-xs text-blue-600 font-medium mb-1">Tension</p>
+            <p class="text-lg font-bold text-blue-900">
+              {{ getLastBloodPressure() }}
+            </p>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-3">
+            <p class="text-xs text-purple-600 font-medium mb-1">Glycémie</p>
+            <p class="text-lg font-bold text-purple-900">
+              {{ getLastGlycemia() }}
+            </p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-3">
+            <p class="text-xs text-green-600 font-medium mb-1">IMC</p>
+            <p class="text-lg font-bold text-green-900">
+              {{ member?.bmi ? member?.bmi?.toFixed(1) : '—' }}
+            </p>
+          </div>
+          <div class="bg-orange-50 rounded-lg p-3">
+            <p class="text-xs text-orange-600 font-medium mb-1">Dépistages</p>
+            <p class="text-lg font-bold text-orange-900">
+              {{ getTotalScreenings() }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs de contenu -->
+<p-tabs value="Vue d'ensemble">
+  <p-tablist>
+    <p-tab value="Vue d'ensemble">Vue d'ensemble</p-tab>
+    <p-tab value="Prédépistage">Prédépistage</p-tab>
+    <p-tab value="Dépistage HTA">Dépistage HTA</p-tab>
+    <p-tab value="Dépistage Diabète">Dépistage Diabète</p-tab>
+    <p-tab value="Références">Références & Suivi</p-tab>
+  </p-tablist>
+  <p-tabpanels>
+    <!-- Tab: Vue d'ensemble -->
+    <p-tabpanel value="Vue d'ensemble">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <!-- Colonne principale -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Graphique d'évolution -->
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Évolution des mesures</h3>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+              <div class="h-80">
+                <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
+              </div>
+            </ng-template>
+          </p-card>
+
+          <!-- Résumé des examens -->
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Résumé des examens</h3>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Prédépistage -->
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                  <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
+                      <i class="pi pi-check-circle text-white"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold text-gray-900">Prédépistage</h4>
+                      <p class="text-sm text-gray-500">{{ member?.riskTests?.length || 0 }} test(s)</p>
+                    </div>
+                  </div>
+                  <p-tag
+                    *ngIf="member?.riskTests?.length"
+                    [value]="'Score: ' + member?.riskTests?.[0]?.risklevel + ' - ' + getRiskLevelFromScore(member?.riskTests?.[0]?.risklevel)"
+                    [severity]="getRiskSeverityFromScore(member?.riskTests?.[0]?.risklevel)"
+                  />
+                </div>
+
+                <!-- Dépistage HTA -->
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                      <i class="pi pi-heart text-white"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold text-gray-900">Dépistage HTA</h4>
+                      <p class="text-sm text-gray-500">{{ member?.screeningsHTA?.length || 0 }} dépistage(s)</p>
+                    </div>
+                  </div>
+                  <p-tag
+                    *ngIf="member?.htaClassification"
+                    [value]="member?.htaClassification === 'elevee' ? 'HTA Élevée' : 'HTA Normale'"
+                    [severity]="member?.htaClassification === 'elevee' ? 'danger' : 'success'"
+                  />
+                </div>
+
+                <!-- Dépistage Diabète -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                      <i class="pi pi-chart-line text-white"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold text-gray-900">Dépistage Diabète</h4>
+                      <p class="text-sm text-gray-500">{{ member?.screeningsDiabete?.length || 0 }} dépistage(s)</p>
+                    </div>
+                  </div>
+                  <p-tag
+                    *ngIf="member?.diabetesClassification"
+                    [value]="member?.diabetesClassification === 'elevee' ? 'Diabète Élevé' : 'Diabète Normal'"
+                    [severity]="member?.diabetesClassification === 'elevee' ? 'warn' : 'success'"
+                  />
+                </div>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="space-y-6">
+          <!-- Informations personnelles -->
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Informations</h3>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+              <div class="space-y-4">
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >Date de naissance</label
+                  >
+                  <p class="text-gray-900 mt-1">
+                    {{ member?.dateOfBirth | date : 'dd/MM/yyyy' }}
+                  </p>
+                </div>
+
+                <p-divider />
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >Ménage</label
+                  >
+                  <p class="text-gray-900 mt-1">{{ member?.pvh }}</p>
+                  <p class="text-sm text-gray-500">{{ member?.matrimonialStatus }}</p>
+                </div>
+
+                <p-divider />
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >ACS Assigné</label
+                  >
+                  <p class="text-gray-900 mt-1">{{ member?.assignedWorkerName }}</p>
+                  <p class="text-sm text-gray-500">{{ member?.assignedWorkerPhone }}</p>
+                </div>
+
+                <p-divider />
+
+                <div *ngIf="member?.weight || member?.height">
+                  <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >Mesures physiques</label
+                  >
+                  <div class="mt-2 space-y-1">
+                    <p class="text-sm text-gray-700" *ngIf="member?.weight">
+                      Poids: <span class="font-medium">{{ member?.weight }} kg</span>
+                    </p>
+                    <p class="text-sm text-gray-700" *ngIf="member?.height">
+                      Taille: <span class="font-medium">{{ member?.height }} cm</span>
+                    </p>
+                    <p class="text-sm text-gray-700" *ngIf="member?.bmi">
+                      IMC: <span class="font-medium">{{ member?.bmi }}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </p-card>
+
+          <!-- Antécédents -->
+          <p-card *ngIf="member?.medicalHistory?.length">
+            <ng-template pTemplate="header">
+              <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Antécédents</h3>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+              <div class="flex flex-wrap gap-2">
+                <p-tag
+                  *ngFor="let antecedent of member?.medicalHistory"
+                  [value]="antecedent"
+                  severity="secondary"
+                />
+              </div>
+            </ng-template>
+          </p-card>
+
+          <!-- Allergies -->
+          <p-card *ngIf="member?.allergies?.length">
+            <ng-template pTemplate="header">
+              <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Allergies</h3>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+              <div class="flex flex-wrap gap-2">
+                <p-tag
+                  *ngFor="let allergie of member?.allergies"
+                  [value]="allergie"
+                  severity="danger"
+                  icon="pi pi-exclamation-circle"
+                />
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+      </div>
+    </p-tabpanel>
+
+    <!-- Tab: Prédépistage -->
+    <p-tabpanel value="Prédépistage">
+      <div class="mt-6">
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">Historique des prédépistages</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  {{ member?.riskTests?.length || 0 }} prédépistage(s) enregistré(s)
+                </p>
+              </div>
+              <p-button
+                label="Nouveau prédépistage"
+                icon="pi pi-plus"
+                size="small"
+                (onClick)="newScreening()"
+              />
+            </div>
+          </ng-template>
+          <ng-template pTemplate="content">
+            <p-table
+              [value]="member?.riskTests || []"
+              [paginator]="true"
+              [rows]="10"
+              styleClass="p-datatable-sm"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Score de risque</th>
+                  <th scope="col">Niveau</th>
+                  <th scope="col" class="hidden lg:table-cell">Facteurs de risque</th>
+                  <th scope="col" class="text-right">Actions</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-riskTest>
+                <tr>
+                  <td>{{ riskTest.testdate }}</td>
+                  <td>
+                    <p-tag
+                      [value]="riskTest.testtype"
+                      [severity]="riskTest.testtype === 'Hypertension' ? 'danger' : 'warn'"
+                    />
+                  </td>
+                  <td>
+                    <span class="font-mono text-lg font-bold">{{ riskTest.risklevel || '—' }}</span>
+                  </td>
+                  <td>
+                    <p-tag
+                      [value]="getRiskLevelFromScore(riskTest.risklevel)"
+                      [severity]="getRiskSeverityFromScore(riskTest.risklevel)"
+                    />
+                  </td>
+                  <td class="hidden lg:table-cell">
+                    <p class="text-sm text-gray-600 truncate max-w-xs" [pTooltip]="riskTest.testresult">
+                      {{ formatTestResult(riskTest.testresult) }}
+                    </p>
+                  </td>
+                  <td>
+                    <div class="flex items-center justify-end gap-2">
+                      <p-button
+                        icon="pi pi-eye"
+                        [text]="true"
+                        [rounded]="true"
+                        severity="info"
+                        size="small"
+                        pTooltip="Voir détails"
+                        (onClick)="viewRiskTest(riskTest)"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="6" class="text-center py-8">
+                    <i class="pi pi-inbox text-gray-400 text-4xl mb-3"></i>
+                    <p class="text-gray-500">Aucun prédépistage enregistré</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </ng-template>
+        </p-card>
+      </div>
+    </p-tabpanel>
+
+    <!-- Tab: Dépistage HTA -->
+    <p-tabpanel value="Dépistage HTA">
+      <div class="mt-6">
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">Historique des dépistages HTA</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  {{ member?.screeningsHTA?.length || 0 }} dépistage(s) enregistré(s)
+                </p>
+              </div>
+              <p-button
+                label="Nouveau dépistage HTA"
+                icon="pi pi-plus"
+                size="small"
+                (onClick)="newScreening()"
+              />
+            </div>
+          </ng-template>
+          <ng-template pTemplate="content">
+            <p-table
+              [value]="member?.screeningsHTA || []"
+              [paginator]="true"
+              [rows]="10"
+              styleClass="p-datatable-sm"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Tension moy.</th>
+                  <th scope="col">Bras Droit</th>
+                  <th scope="col">Bras Gauche</th>
+                  <th scope="col">Statut</th>
+                  <th scope="col" class="hidden lg:table-cell">Déjà malade</th>
+                  <th scope="col" class="text-right">Actions</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-screening>
+                <tr>
+                  <td>{{ screening.createdat | date : 'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span class="font-mono text-lg font-bold text-red-600"
+                      >{{ screening.sys_avarage }}/{{ screening.dias_avarage }}</span
+                    >
+                    <p class="text-xs text-gray-500">mmHg</p>
+                  </td>
+                  <td>
+                    <p class="text-sm font-medium">{{ screening.armrightsystol }}/{{ screening.armrightdiastol }}</p>
+                    <p class="text-xs text-gray-500">Sys/Dias</p>
+                  </td>
+                  <td>
+                    <p class="text-sm font-medium">{{ screening.armleftsystol }}/{{ screening.armleftdiastol }}</p>
+                    <p class="text-xs text-gray-500">Sys/Dias</p>
+                  </td>
+                  <td>
+                    <p-tag
+                      [value]="screening.flag === 0 ? 'Normal' : 'Élevé'"
+                      [severity]="screening.flag === 0 ? 'success' : 'danger'"
+                    />
+                  </td>
+                  <td class="hidden lg:table-cell">
+                    <p-tag
+                      [value]="screening.didhavethedisease"
+                      [severity]="screening.didhavethedisease === 'Oui' || screening.didhavethedisease === 'Yes' ? 'warn' : 'secondary'"
+                    />
+                  </td>
+                  <td>
+                    <div class="flex items-center justify-end gap-2">
+                      <p-button
+                        icon="pi pi-eye"
+                        [text]="true"
+                        [rounded]="true"
+                        severity="info"
+                        size="small"
+                        pTooltip="Voir détails"
+                        (onClick)="viewScreeningHTA(screening)"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="7" class="text-center py-8">
+                    <i class="pi pi-inbox text-gray-400 text-4xl mb-3"></i>
+                    <p class="text-gray-500">Aucun dépistage HTA enregistré</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </ng-template>
+        </p-card>
+      </div>
+    </p-tabpanel>
+
+    <!-- Tab: Dépistage Diabète -->
+    <p-tabpanel value="Dépistage Diabète">
+      <div class="mt-6">
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">Historique des dépistages Diabète</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  {{ member?.screeningsDiabete?.length || 0 }} dépistage(s) enregistré(s)
+                </p>
+              </div>
+              <p-button
+                label="Nouveau dépistage Diabète"
+                icon="pi pi-plus"
+                size="small"
+                (onClick)="newScreening()"
+              />
+            </div>
+          </ng-template>
+          <ng-template pTemplate="content">
+            <p-table
+              [value]="member?.screeningsDiabete || []"
+              [paginator]="true"
+              [rows]="10"
+              styleClass="p-datatable-sm"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Glycémie</th>
+                  <th scope="col">À jeun</th>
+                  <th scope="col">Statut</th>
+                  <th scope="col" class="hidden lg:table-cell">Déjà malade</th>
+                  <th scope="col" class="hidden lg:table-cell">Grade</th>
+                  <th scope="col" class="text-right">Actions</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-screening>
+                <tr>
+                  <td>{{ screening.createdat | date : 'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span class="font-mono text-lg font-bold text-yellow-600">{{ screening.glucose_level }}</span>
+                    <span class="text-sm text-gray-500"> g/L</span>
+                  </td>
+                  <td>
+                    <p-tag
+                      [value]="screening.eatornot === 'Non' || screening.eatornot === 'No' ? 'À jeun' : 'Non à jeun'"
+                      [severity]="screening.eatornot === 'Non' || screening.eatornot === 'No' ? 'info' : 'secondary'"
+                    />
+                  </td>
+                  <td>
+                    <p-tag
+                      [value]="screening.flag === 0 ? 'Normal' : 'Élevé'"
+                      [severity]="screening.flag === 0 ? 'success' : 'warn'"
+                    />
+                  </td>
+                  <td class="hidden lg:table-cell">
+                    <p-tag
+                      [value]="screening.didhavethedisease"
+                      [severity]="screening.didhavethedisease === 'Oui' || screening.didhavethedisease === 'Yes' ? 'warn' : 'secondary'"
+                    />
+                  </td>
+                  <td class="hidden lg:table-cell">
+                    <span class="text-sm text-gray-600">{{ screening.grade || '—' }}</span>
+                  </td>
+                  <td>
+                    <div class="flex items-center justify-end gap-2">
+                      <p-button
+                        icon="pi pi-eye"
+                        [text]="true"
+                        [rounded]="true"
+                        severity="info"
+                        size="small"
+                        pTooltip="Voir détails"
+                        (onClick)="viewScreeningDiabete(screening)"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="7" class="text-center py-8">
+                    <i class="pi pi-inbox text-gray-400 text-4xl mb-3"></i>
+                    <p class="text-gray-500">Aucun dépistage diabète enregistré</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </ng-template>
+        </p-card>
+      </div>
+    </p-tabpanel>
+
+    <!-- Tab: Références & Suivi -->
+    <p-tabpanel value="Références">
+      <div class="mt-6 space-y-6">
+        <!-- Statistiques des références -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center">
+                <i class="pi pi-send text-white text-xl"></i>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-indigo-900">{{ getTotalReferences() }}</p>
+                <p class="text-sm text-indigo-600">Références</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                <i class="pi pi-check-circle text-white text-xl"></i>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-green-900">{{ getTotalFollowings() }}</p>
+                <p class="text-sm text-green-600">Suivis effectués</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                <i class="pi pi-clock text-white text-xl"></i>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-orange-900">
+                  {{ (member?.references | keyvalue)?.length ? (member?.references | slice:0:1)?.[0]?.status : '—' }}
+                </p>
+                <p class="text-sm text-orange-600">Dernière référence</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liste des références -->
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">Références du patient</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  {{ member?.references?.length || 0 }} référence(s) enregistrée(s)
+                </p>
+              </div>
+              <p-button
+                label="Nouvelle référence"
+                icon="pi pi-plus"
+                size="small"
+                (onClick)="newReference()"
+              />
+            </div>
+          </ng-template>
+          <ng-template pTemplate="content">
+            <!-- Accordéon des références -->
+            <div class="space-y-4">
+              <div
+                *ngFor="let reference of member?.references"
+                class="border border-gray-200 rounded-lg overflow-hidden"
+              >
+                <!-- En-tête de la référence -->
+                <div class="bg-gray-50 p-4">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                      <div
+                        class="w-12 h-12 rounded-full flex items-center justify-center"
+                        [ngClass]="{
+                          'bg-blue-100 text-blue-600': reference.reference_type === 'Confirmation',
+                          'bg-red-100 text-red-600': reference.reference_type === 'Urgence',
+                          'bg-green-100 text-green-600': reference.reference_type === 'Consultation',
+                          'bg-gray-100 text-gray-600': !reference.reference_type
+                        }"
+                      >
+                        <i class="pi" [ngClass]="getReferenceTypeIcon(reference.reference_type)"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-gray-900">
+                          {{ reference.referenceillness || 'Référence' }}
+                        </h4>
+                        <p class="text-sm text-gray-500">
+                          <i class="pi pi-calendar mr-1"></i>
+                          {{ reference.referencedate | date : 'dd/MM/yyyy' }}
+                          <span class="mx-2">•</span>
+                          <i class="pi pi-building mr-1"></i>
+                          {{ reference.referedcenter }}
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">
+                          <i class="pi pi-user mr-1"></i>
+                          Référé par: {{ reference.referedby }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <p-tag
+                        [value]="reference.reference_type"
+                        severity="secondary"
+                      />
+                      <p-tag
+                        [value]="reference.status"
+                        [severity]="getReferenceStatusSeverity(reference.status)"
+                      />
+                      <p-button
+                        icon="pi pi-eye"
+                        [text]="true"
+                        [rounded]="true"
+                        severity="info"
+                        size="small"
+                        pTooltip="Voir détails"
+                        (onClick)="viewReference(reference)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Suivis de la référence -->
+                <div class="p-4" *ngIf="reference.followings && reference.followings.length > 0">
+                  <h5 class="text-sm font-semibold text-gray-700 mb-3">
+                    <i class="pi pi-history mr-2"></i>
+                    Historique des suivis ({{ reference.followings.length }})
+                  </h5>
+                  <div class="space-y-3">
+                    <div
+                      *ngFor="let following of reference.followings"
+                      class="flex items-center justify-between bg-white border border-gray-100 rounded-lg p-3"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 rounded-full flex items-center justify-center"
+                          [ngClass]="{
+                            'bg-green-100 text-green-600': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
+                            'bg-yellow-100 text-yellow-600': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                            'bg-red-100 text-red-600': following.patientattended !== 'Oui'
+                          }"
+                        >
+                          <i
+                            class="pi"
+                            [ngClass]="{
+                              'pi-check': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
+                              'pi-exclamation-triangle': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                              'pi-times': following.patientattended !== 'Oui'
+                            }"
+                          ></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-900">
+                            {{ following.daterefered | date : 'dd/MM/yyyy' }}
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            {{ following.referedwhere }}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <p-tag
+                          [value]="getFollowingStatusLabel(following.patientattended, following.patientreceivcare)"
+                          [severity]="getFollowingStatusSeverity(following.patientattended, following.patientreceivcare)"
+                          [rounded]="true"
+                        />
+                        <p-button
+                          icon="pi pi-eye"
+                          [text]="true"
+                          [rounded]="true"
+                          severity="secondary"
+                          size="small"
+                          pTooltip="Détails du suivi"
+                          (onClick)="viewFollowing(following)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Message si pas de suivi -->
+                <div
+                  *ngIf="!reference.followings || reference.followings.length === 0"
+                  class="p-4 text-center text-gray-500"
+                >
+                  <i class="pi pi-info-circle mr-2"></i>
+                  Aucun suivi enregistré pour cette référence
+                </div>
+
+                <!-- Bouton ajouter un suivi -->
+                <div class="p-4 border-t border-gray-200 bg-gray-50">
+                  <p-button
+                    label="Ajouter un suivi"
+                    icon="pi pi-plus"
+                    size="small"
+                    [outlined]="true"
+                    (onClick)="openNewFollowingModal(reference)"
+                  />
+                </div>
+              </div>
+
+              <!-- Message si pas de référence -->
+              <div
+                *ngIf="!member?.references || member?.references?.length === 0"
+                class="text-center py-12"
+              >
+                <i class="pi pi-inbox text-gray-400 text-5xl mb-4"></i>
+                <p class="text-gray-500 text-lg">Aucune référence enregistrée</p>
+                <p class="text-gray-400 text-sm mt-1">
+                  Les références permettent de suivre les patients orientés vers d'autres structures de santé
+                </p>
+                <p-button
+                  label="Créer une référence"
+                  icon="pi pi-plus"
+                  class="mt-4"
+                  (onClick)="newReference()"
+                />
+              </div>
+            </div>
+          </ng-template>
+        </p-card>
+      </div>
+    </p-tabpanel>
+  </p-tabpanels>
+</p-tabs>
+
+<!-- ==================== MODALES ==================== -->
+
+<!-- Modal: Détails d'une référence -->
+<p-dialog
+  header="Détails de la référence"
+  [(visible)]="showReferenceDetailModal"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeReferenceDetailModal()"
+>
+  <div class="space-y-6" *ngIf="selectedReference">
+    <!-- En-tête avec icône et statut -->
+    <div class="flex items-start gap-4 pb-4 border-b border-gray-200">
+      <div
+        class="w-16 h-16 rounded-full flex items-center justify-center"
+        [ngClass]="{
+          'bg-blue-100 text-blue-600': selectedReference.reference_type === 'Confirmation',
+          'bg-red-100 text-red-600': selectedReference.reference_type === 'Urgence',
+          'bg-green-100 text-green-600': selectedReference.reference_type === 'Consultation',
+          'bg-gray-100 text-gray-600': !selectedReference.reference_type
+        }"
+      >
+        <i class="pi text-2xl" [ngClass]="getReferenceTypeIcon(selectedReference.reference_type)"></i>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-xl font-semibold text-gray-900">
+          {{ selectedReference.referenceillness || 'Référence' }}
+        </h3>
+        <div class="flex items-center gap-2 mt-2">
+          <p-tag [value]="selectedReference.reference_type" severity="secondary" />
+          <p-tag
+            [value]="selectedReference.status"
+            [severity]="getReferenceStatusSeverity(selectedReference.status)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Informations de la référence -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Date de référence</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-calendar text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedReference.referencedate | date : 'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Centre de référence</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-building text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedReference.referedcenter || '—' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Référé par</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-user text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedReference.referedby || '—' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Maladie / Motif</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-heart text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedReference.referenceillness || '—' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Date de création</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-clock text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedReference.createdat | date : 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Nombre de suivis</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-list text-gray-400"></i>
+          <span class="text-gray-900 font-semibold">{{ selectedReference.followings?.length || 0 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des suivis -->
+    <div *ngIf="selectedReference.followings && selectedReference.followings.length > 0">
+      <h4 class="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+        <i class="pi pi-history"></i>
+        Historique des suivis
+      </h4>
+      <div class="space-y-2 max-h-48 overflow-y-auto">
+        <div
+          *ngFor="let following of selectedReference.followings"
+          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+          (click)="viewFollowing(following)"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-full flex items-center justify-center"
+              [ngClass]="{
+                'bg-green-100 text-green-600': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
+                'bg-yellow-100 text-yellow-600': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                'bg-red-100 text-red-600': following.patientattended !== 'Oui'
+              }"
+            >
+              <i
+                class="pi text-sm"
+                [ngClass]="{
+                  'pi-check': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
+                  'pi-exclamation-triangle': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                  'pi-times': following.patientattended !== 'Oui'
+                }"
+              ></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">{{ following.daterefered | date : 'dd/MM/yyyy' }}</p>
+              <p class="text-xs text-gray-500">{{ following.referedwhere }}</p>
+            </div>
+          </div>
+          <p-tag
+            [value]="getFollowingStatusLabel(following.patientattended, following.patientreceivcare)"
+            [severity]="getFollowingStatusSeverity(following.patientattended, following.patientreceivcare)"
+            [rounded]="true"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between">
+      <p-button
+        label="Ajouter un suivi"
+        icon="pi pi-plus"
+        [outlined]="true"
+        (onClick)="closeReferenceDetailModal(); openNewFollowingModal(selectedReference!)"
+      />
+      <p-button
+        label="Fermer"
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="closeReferenceDetailModal()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Détails d'un suivi -->
+<p-dialog
+  header="Détails du suivi"
+  [(visible)]="showFollowingDetailModal"
+  [modal]="true"
+  [style]="{ width: '550px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeFollowingDetailModal()"
+>
+  <div class="space-y-6" *ngIf="selectedFollowing">
+    <!-- Statut principal -->
+    <div class="flex items-center justify-center p-6 rounded-lg"
+      [ngClass]="{
+        'bg-green-50': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
+        'bg-yellow-50': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+        'bg-red-50': selectedFollowing.patientattended !== 'Oui'
+      }"
+    >
+      <div class="text-center">
+        <div
+          class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+          [ngClass]="{
+            'bg-green-500 text-white': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
+            'bg-yellow-500 text-white': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+            'bg-red-500 text-white': selectedFollowing.patientattended !== 'Oui'
+          }"
+        >
+          <i
+            class="pi text-2xl"
+            [ngClass]="{
+              'pi-check': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
+              'pi-exclamation-triangle': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+              'pi-times': selectedFollowing.patientattended !== 'Oui'
+            }"
+          ></i>
+        </div>
+        <p class="text-lg font-semibold"
+          [ngClass]="{
+            'text-green-800': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
+            'text-yellow-800': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+            'text-red-800': selectedFollowing.patientattended !== 'Oui'
+          }"
+        >
+          {{ getFollowingStatusLabel(selectedFollowing.patientattended, selectedFollowing.patientreceivcare) }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Informations du suivi -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Date du suivi</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-calendar text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedFollowing.daterefered | date : 'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Lieu</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-building text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedFollowing.referedwhere || '—' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Suivi par</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-user text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedFollowing.referedby || '—' }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Date de création</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-clock text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedFollowing.createdat | date : 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- Résultats du suivi -->
+    <div class="space-y-4">
+      <h4 class="text-md font-semibold text-gray-800">Résultats du suivi</h4>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-3 rounded-lg"
+          [ngClass]="{
+            'bg-green-50': selectedFollowing.patientattended === 'Oui',
+            'bg-red-50': selectedFollowing.patientattended !== 'Oui'
+          }"
+        >
+          <span class="block text-sm text-gray-500 mb-1">Patient s'est présenté ?</span>
+          <div class="flex items-center gap-2">
+            <i class="pi"
+              [ngClass]="{
+                'pi-check-circle text-green-600': selectedFollowing.patientattended === 'Oui',
+                'pi-times-circle text-red-600': selectedFollowing.patientattended !== 'Oui'
+              }"
+            ></i>
+            <span class="font-semibold"
+              [ngClass]="{
+                'text-green-800': selectedFollowing.patientattended === 'Oui',
+                'text-red-800': selectedFollowing.patientattended !== 'Oui'
+              }"
+            >
+              {{ selectedFollowing.patientattended || 'Non renseigné' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg"
+          [ngClass]="{
+            'bg-green-50': selectedFollowing.patientreceivcare === 'Oui',
+            'bg-red-50': selectedFollowing.patientreceivcare === 'Non',
+            'bg-gray-50': !selectedFollowing.patientreceivcare
+          }"
+        >
+          <span class="block text-sm text-gray-500 mb-1">Soins reçus ?</span>
+          <div class="flex items-center gap-2">
+            <i class="pi"
+              [ngClass]="{
+                'pi-check-circle text-green-600': selectedFollowing.patientreceivcare === 'Oui',
+                'pi-times-circle text-red-600': selectedFollowing.patientreceivcare === 'Non',
+                'pi-minus-circle text-gray-400': !selectedFollowing.patientreceivcare
+              }"
+            ></i>
+            <span class="font-semibold"
+              [ngClass]="{
+                'text-green-800': selectedFollowing.patientreceivcare === 'Oui',
+                'text-red-800': selectedFollowing.patientreceivcare === 'Non',
+                'text-gray-600': !selectedFollowing.patientreceivcare
+              }"
+            >
+              {{ selectedFollowing.patientreceivcare || 'Non renseigné' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raison de non-présentation -->
+      <div *ngIf="selectedFollowing.patientattended !== 'Oui' && selectedFollowing.whydidnotattd" class="p-3 bg-red-50 rounded-lg">
+        <span class="block text-sm font-medium text-red-700 mb-1">
+          <i class="pi pi-info-circle mr-1"></i>
+          Raison de non-présentation
+        </span>
+        <p class="text-red-900">{{ selectedFollowing.whydidnotattd }}</p>
+      </div>
+
+      <!-- Raison de non-soins -->
+      <div *ngIf="selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui' && selectedFollowing.whydidnotreceivcare" class="p-3 bg-yellow-50 rounded-lg">
+        <span class="block text-sm font-medium text-yellow-700 mb-1">
+          <i class="pi pi-info-circle mr-1"></i>
+          Raison de non-soins
+        </span>
+        <p class="text-yellow-900">{{ selectedFollowing.whydidnotreceivcare }}</p>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Fermer"
+      icon="pi pi-times"
+      (onClick)="closeFollowingDetailModal()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Nouveau suivi -->
+<p-dialog
+  header="Ajouter un nouveau suivi"
+  [(visible)]="showNewFollowingModal"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeNewFollowingModal()"
+>
+  <div class="space-y-6" *ngIf="selectedReference">
+    <!-- Info sur la référence -->
+    <div class="p-4 bg-blue-50 rounded-lg">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-info-circle text-blue-500 text-xl"></i>
+        <div>
+          <p class="text-sm font-medium text-blue-900">Référence : {{ selectedReference.referenceillness }}</p>
+          <p class="text-xs text-blue-700">{{ selectedReference.referedcenter }} - {{ selectedReference.referencedate | date : 'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Date du suivi -->
+      <div class="col-span-2 md:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="daterefered">
+          Date du suivi <span class="text-red-500">*</span>
+        </label>
+        <p-datepicker
+          id="daterefered"
+          [(ngModel)]="newFollowingForm.daterefered"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          styleClass="w-full"
+          placeholder="Sélectionner une date"
+        />
+      </div>
+
+      <!-- Lieu du suivi -->
+      <div class="col-span-2 md:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="referedwhere">
+          Lieu du suivi <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="referedwhere"
+          type="text"
+          pInputText
+          [(ngModel)]="newFollowingForm.referedwhere"
+          class="w-full"
+          placeholder="Centre de santé, hôpital..."
+        />
+      </div>
+
+      <!-- Suivi effectué par -->
+      <div class="col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="referedby">
+          Suivi effectué par
+        </label>
+        <input
+          id="referedby"
+          type="text"
+          pInputText
+          [(ngModel)]="newFollowingForm.referedby"
+          class="w-full"
+          placeholder="Nom de l'agent de santé"
+        />
+      </div>
+
+      <!-- Patient s'est présenté -->
+      <div class="col-span-2 md:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="patientattended">
+          Le patient s'est présenté ? <span class="text-red-500">*</span>
+        </label>
+        <p-select
+          id="patientattended"
+          [(ngModel)]="newFollowingForm.patientattended"
+          [options]="attendanceOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner"
+          styleClass="w-full"
+        />
+      </div>
+
+      <!-- Soins reçus -->
+      <div class="col-span-2 md:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="patientreceivcare">
+          Le patient a reçu des soins ?
+        </label>
+        <p-select
+          id="patientreceivcare"
+          [(ngModel)]="newFollowingForm.patientreceivcare"
+          [options]="careReceivedOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner"
+          styleClass="w-full"
+          [disabled]="newFollowingForm.patientattended !== 'Oui'"
+        />
+      </div>
+
+      <!-- Raison de non-présentation -->
+      <div class="col-span-2" *ngIf="newFollowingForm.patientattended === 'Non'">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="whydidnotattd">
+          Raison de la non-présentation
+        </label>
+        <p-select
+          id="whydidnotattd"
+          [(ngModel)]="newFollowingForm.whydidnotattd"
+          [options]="nonAttendanceReasons"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner une raison"
+          styleClass="w-full"
+        />
+      </div>
+
+      <!-- Raison de non-soins -->
+      <div class="col-span-2" *ngIf="newFollowingForm.patientattended === 'Oui' && newFollowingForm.patientreceivcare === 'Non'">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="whydidnotreceivcare">
+          Raison de la non-réception des soins
+        </label>
+        <p-select
+          id="whydidnotreceivcare"
+          [(ngModel)]="newFollowingForm.whydidnotreceivcare"
+          [options]="noCareReasons"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner une raison"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Message d'aide -->
+    <div class="text-sm text-gray-500 flex items-start gap-2">
+      <i class="pi pi-info-circle mt-0.5"></i>
+      <span>Les champs marqués d'un <span class="text-red-500">*</span> sont obligatoires.</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        label="Annuler"
+        icon="pi pi-times"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeNewFollowingModal()"
+      />
+      <p-button
+        label="Enregistrer"
+        icon="pi pi-check"
+        (onClick)="saveNewFollowing()"
+        [disabled]="!isNewFollowingFormValid()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

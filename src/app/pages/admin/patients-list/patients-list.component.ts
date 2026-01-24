@@ -1,31 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { Select } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
-import { HeaderComponent } from '@shared/components/header/header.component';
-import { SidebarComponent } from '@shared/components/sidebar/sidebar.component';
 import { FormsModule } from '@angular/forms';
-
-interface Patient {
-  id: string;
-  nom: string;
-  prenom: string;
-  age: number;
-  sexe: string;
-  telephone: string;
-  acs_assigne: string;
-  derniere_visite: Date;
-  classification_hta: 'normale' | 'elevee' | null;
-  classification_diabete: 'normale' | 'elevee' | null;
-  statut_suivi: 'actif' | 'stable' | 'risque' | 'urgent';
-  derniere_tension?: string;
-  derniere_glycemie?: string;
-}
+import { HouseholdMember } from '@core/models/household';
 
 interface FilterOption {
   label: string;
@@ -45,14 +28,11 @@ interface FilterOption {
     Select,
     TooltipModule,
     FormsModule,
-    HeaderComponent,
-    SidebarComponent
   ],
   templateUrl: './patients-list.component.html',
   styleUrl: './patients-list.component.scss',
 })
 export class PatientsListComponent implements OnInit {
-  sidebarOpen = false;
   loading = false;
   searchTerm = '';
   selectedStatut: string | null = null;
@@ -71,8 +51,13 @@ export class PatientsListComponent implements OnInit {
     { label: 'HTA + Diabète', value: 'both' }
   ];
 
-  patients: Patient[] = [];
-  filteredPatients: Patient[] = [];
+  patients: HouseholdMember[] = [];
+  filteredPatients: HouseholdMember[] = [];
+
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly router: Router
+  ) {}
 
   ngOnInit() {
     this.loadPatients();
@@ -86,73 +71,100 @@ export class PatientsListComponent implements OnInit {
       this.patients = [
         {
           id: '1',
-          nom: 'Sall',
-          prenom: 'Moussa',
+          firstName: 'Moussa',
+          lastName: 'Sall',
           age: 58,
-          sexe: 'M',
-          telephone: '+221 77 123 45 67',
-          acs_assigne: 'Fatou Dieng',
-          derniere_visite: new Date('2026-01-08'),
-          classification_hta: 'elevee',
-          classification_diabete: 'elevee',
-          statut_suivi: 'risque',
-          derniere_tension: '145/92',
-          derniere_glycemie: '1.35 g/L'
+          sex: 'M',
+          phoneNumber: '+221 77 123 45 67',
+          assignedWorkerName: 'Fatou Dieng',
+          lastVisitDate: new Date('2026-01-08'),
+          htaClassification: 'elevee',
+          diabetesClassification: 'elevee',
+          followUpStatus: 'risque',
+          lastBloodPressure: '145/92',
+          lastGlycemia: 1.35,
+          filledScreeningForm: true,
+          filledAwarenessForm: true,
+          householdid: 'h-001'
         },
         {
           id: '2',
-          nom: 'Ndiaye',
-          prenom: 'Awa',
+          firstName: 'Awa',
+          lastName: 'Ndiaye',
           age: 52,
-          sexe: 'F',
-          telephone: '+221 77 234 56 78',
-          acs_assigne: 'Fatou Dieng',
-          derniere_visite: new Date('2026-01-10'),
-          classification_hta: 'elevee',
-          classification_diabete: null,
-          statut_suivi: 'urgent',
-          derniere_tension: '185/105'
+          sex: 'F',
+          phoneNumber: '+221 77 234 56 78',
+          assignedWorkerName: 'Fatou Dieng',
+          lastVisitDate: new Date('2026-01-10'),
+          htaClassification: 'elevee',
+          followUpStatus: 'urgent',
+          lastBloodPressure: '185/105',
+          filledScreeningForm: true,
+          filledAwarenessForm: true,
+          householdid: 'h-002'
         },
         {
           id: '3',
-          nom: 'Ba',
-          prenom: 'Khady',
+          firstName: 'Khady',
+          lastName: 'Ba',
           age: 45,
-          sexe: 'F',
-          telephone: '+221 77 345 67 89',
-          acs_assigne: 'Ibou Seck',
-          derniere_visite: new Date('2026-01-09'),
-          classification_hta: 'normale',
-          classification_diabete: 'normale',
-          statut_suivi: 'stable'
+          sex: 'F',
+          phoneNumber: '+221 77 345 67 89',
+          assignedWorkerName: 'Ibou Seck',
+          lastVisitDate: new Date('2026-01-09'),
+          htaClassification: 'normale',
+          diabetesClassification: 'normale',
+          followUpStatus: 'stable',
+          filledScreeningForm: true,
+          filledAwarenessForm: true,
+          householdid: 'h-003'
         },
         {
           id: '4',
-          nom: 'Diop',
-          prenom: 'Oumar',
+          firstName: 'Oumar',
+          lastName: 'Diop',
           age: 62,
-          sexe: 'M',
-          telephone: '+221 77 456 78 90',
-          acs_assigne: 'Aminata Fall',
-          derniere_visite: new Date('2026-01-07'),
-          classification_hta: 'elevee',
-          classification_diabete: 'normale',
-          statut_suivi: 'actif',
-          derniere_tension: '142/88'
+          sex: 'M',
+          phoneNumber: '+221 77 456 78 90',
+          assignedWorkerName: 'Aminata Fall',
+          lastVisitDate: new Date('2026-01-07'),
+          htaClassification: 'elevee',
+          diabetesClassification: 'normale',
+          followUpStatus: 'actif',
+          lastBloodPressure: '142/88',
+          filledScreeningForm: true,
+          filledAwarenessForm: false,
+          householdid: 'h-001'
         },
         {
           id: '5',
-          nom: 'Faye',
-          prenom: 'Aissatou',
+          firstName: 'Aissatou',
+          lastName: 'Faye',
           age: 39,
-          sexe: 'F',
-          telephone: '+221 77 567 89 01',
-          acs_assigne: 'Fatou Dieng',
-          derniere_visite: new Date('2026-01-11'),
-          classification_hta: null,
-          classification_diabete: 'elevee',
-          statut_suivi: 'actif',
-          derniere_glycemie: '1.45 g/L'
+          sex: 'F',
+          phoneNumber: '+221 77 567 89 01',
+          assignedWorkerName: 'Fatou Dieng',
+          lastVisitDate: new Date('2026-01-11'),
+          diabetesClassification: 'elevee',
+          followUpStatus: 'actif',
+          lastGlycemia: 1.45,
+          filledScreeningForm: true,
+          filledAwarenessForm: true,
+          householdid: 'h-004'
+        },
+        {
+          id: '6',
+          firstName: 'Ibrahima',
+          lastName: 'Gueye',
+          age: 35,
+          sex: 'M',
+          phoneNumber: '+221 77 678 90 12',
+          assignedWorkerName: 'Ibou Seck',
+          lastVisitDate: new Date('2026-01-05'),
+          followUpStatus: 'stable',
+          filledScreeningForm: false,
+          filledAwarenessForm: true,
+          householdid: 'h-005'
         }
       ];
 
@@ -173,25 +185,25 @@ export class PatientsListComponent implements OnInit {
     this.filteredPatients = this.patients.filter(patient => {
       // Filtre recherche
       const matchSearch = !this.searchTerm ||
-        patient.nom.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        patient.prenom.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        patient.telephone.includes(this.searchTerm) ||
-        patient.acs_assigne.toLowerCase().includes(this.searchTerm.toLowerCase());
+        (patient.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
+        (patient.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
+        (patient.phoneNumber?.includes(this.searchTerm) ?? false) ||
+        (patient.assignedWorkerName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false);
 
       // Filtre statut
       const matchStatut = !this.selectedStatut ||
-        patient.statut_suivi === this.selectedStatut;
+        patient.followUpStatus === this.selectedStatut;
 
       // Filtre classification
       let matchClassification = true;
       if (this.selectedClassification) {
         if (this.selectedClassification === 'hta_elevee') {
-          matchClassification = patient.classification_hta === 'elevee';
+          matchClassification = patient.htaClassification === 'elevee';
         } else if (this.selectedClassification === 'diabete_eleve') {
-          matchClassification = patient.classification_diabete === 'elevee';
+          matchClassification = patient.diabetesClassification === 'elevee';
         } else if (this.selectedClassification === 'both') {
-          matchClassification = patient.classification_hta === 'elevee' &&
-                               patient.classification_diabete === 'elevee';
+          matchClassification = patient.htaClassification === 'elevee' &&
+                               patient.diabetesClassification === 'elevee';
         }
       }
 
@@ -207,15 +219,19 @@ export class PatientsListComponent implements OnInit {
   }
 
   getActivePatients(): number {
-    return this.patients.filter(p => p.statut_suivi === 'actif').length;
+    return this.patients.filter(p => p.followUpStatus === 'actif').length;
   }
 
   getRiskPatients(): number {
-    return this.patients.filter(p => p.statut_suivi === 'risque').length;
+    return this.patients.filter(p => p.followUpStatus === 'risque').length;
   }
 
   getUrgentPatients(): number {
-    return this.patients.filter(p => p.statut_suivi === 'urgent').length;
+    return this.patients.filter(p => p.followUpStatus === 'urgent').length;
+  }
+
+  getScreenedPatients(): number {
+    return this.patients.filter(p => p.filledScreeningForm).length;
   }
 
   getStatutLabel(statut: string): string {
@@ -255,18 +271,34 @@ export class PatientsListComponent implements OnInit {
     // Navigation vers formulaire de création
   }
 
-  viewPatient(patient: Patient) {
-    console.log('Voir dossier:', patient);
-    // Navigation vers détails patient
+  viewPatient(patient: HouseholdMember) {
+    this.router.navigate(['/admin/patient', patient.id]);
   }
 
-  editPatient(patient: Patient) {
+  editPatient(patient: HouseholdMember) {
     console.log('Modifier patient:', patient);
-    // Navigation vers formulaire d\'édition
+    // Navigation vers formulaire d'édition
   }
 
-  callPatient(patient: Patient) {
+  callPatient(patient: HouseholdMember) {
     console.log('Téléconsultation:', patient);
     // Lancer téléconsultation
+  }
+
+  getPatientInitials(patient: HouseholdMember): string {
+    const first = patient.firstName?.charAt(0) || '';
+    const last = patient.lastName?.charAt(0) || '';
+    return (first + last).toUpperCase();
+  }
+
+  getLastMeasures(patient: HouseholdMember): string {
+    const measures: string[] = [];
+    if (patient.lastBloodPressure) {
+      measures.push(`TA: ${patient.lastBloodPressure}`);
+    }
+    if (patient.lastGlycemia) {
+      measures.push(`Glyc: ${patient.lastGlycemia} g/L`);
+    }
+    return measures.length > 0 ? measures.join(' | ') : '—';
   }
 }
