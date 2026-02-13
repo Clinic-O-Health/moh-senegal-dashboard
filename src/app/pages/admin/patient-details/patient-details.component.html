@@ -20,7 +20,7 @@
     <li>
       <div class="flex items-center">
         <i class="pi pi-angle-right text-gray-400 mx-2"></i>
-        <span class="text-gray-500">{{ member?.firstName }} {{ member?.lastName }}</span>
+        <span class="text-gray-500">{{ getMemberFullName() }}</span>
       </div>
     </li>
   </ol>
@@ -36,7 +36,7 @@
           class="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"
         >
           <span class="text-white text-5xl font-bold">
-            {{ member?.firstName?.charAt(0) }}{{ member?.lastName?.charAt(0) }}
+            {{ getMemberInitials() }}
           </span>
         </div>
       </div>
@@ -46,7 +46,7 @@
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
           <div>
             <h1 class="text-3xl font-bold text-gray-900 mb-2">
-              {{ member?.firstName }} {{ member?.lastName }}
+              {{ getMemberFullName() }}
             </h1>
             <div class="flex flex-wrap items-center gap-3 text-gray-600">
               <span class="flex items-center gap-2">
@@ -64,7 +64,7 @@
             </div>
           </div>
 
-          <div class="flex gap-2">
+          <!-- <div class="flex gap-2">
             <p-button
               icon="pi pi-pencil"
               label="Modifier"
@@ -77,7 +77,7 @@
               label="Nouveau dépistage"
               (onClick)="newScreening()"
             />
-          </div>
+          </div> -->
         </div>
 
         <!-- Tags de statut -->
@@ -150,6 +150,7 @@
     <p-tab value="Dépistage HTA">Dépistage HTA</p-tab>
     <p-tab value="Dépistage Diabète">Dépistage Diabète</p-tab>
     <p-tab value="Références">Références & Suivi</p-tab>
+    <p-tab value="Sensibilisation">Sensibilisation</p-tab>
   </p-tablist>
   <p-tabpanels>
     <!-- Tab: Vue d'ensemble -->
@@ -183,12 +184,16 @@
                 <!-- Prédépistage -->
                 <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                   <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
+                    <div
+                      class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center"
+                    >
                       <i class="pi pi-check-circle text-white"></i>
                     </div>
                     <div>
                       <h4 class="font-semibold text-gray-900">Prédépistage</h4>
-                      <p class="text-sm text-gray-500">{{ member?.riskTests?.length || 0 }} test(s)</p>
+                      <p class="text-sm text-gray-500">
+                        {{ member?.riskTests?.length || 0 }} test(s)
+                      </p>
                     </div>
                   </div>
                   <p-tag
@@ -206,7 +211,9 @@
                     </div>
                     <div>
                       <h4 class="font-semibold text-gray-900">Dépistage HTA</h4>
-                      <p class="text-sm text-gray-500">{{ member?.screeningsHTA?.length || 0 }} dépistage(s)</p>
+                      <p class="text-sm text-gray-500">
+                        {{ member?.screeningsHTA?.length || 0 }} dépistage(s)
+                      </p>
                     </div>
                   </div>
                   <p-tag
@@ -219,17 +226,25 @@
                 <!-- Dépistage Diabète -->
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <div
+                      class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center"
+                    >
                       <i class="pi pi-chart-line text-white"></i>
                     </div>
                     <div>
                       <h4 class="font-semibold text-gray-900">Dépistage Diabète</h4>
-                      <p class="text-sm text-gray-500">{{ member?.screeningsDiabete?.length || 0 }} dépistage(s)</p>
+                      <p class="text-sm text-gray-500">
+                        {{ member?.screeningsDiabete?.length || 0 }} dépistage(s)
+                      </p>
                     </div>
                   </div>
                   <p-tag
                     *ngIf="member?.diabetesClassification"
-                    [value]="member?.diabetesClassification === 'elevee' ? 'Diabète Élevé' : 'Diabète Normal'"
+                    [value]="
+                      member?.diabetesClassification === 'elevee'
+                        ? 'Diabète Élevé'
+                        : 'Diabète Normal'
+                    "
                     [severity]="member?.diabetesClassification === 'elevee' ? 'warn' : 'success'"
                   />
                 </div>
@@ -254,7 +269,7 @@
                     >Date de naissance</label
                   >
                   <p class="text-gray-900 mt-1">
-                    {{ member?.dateOfBirth | date : 'dd/MM/yyyy' }}
+                    {{ member?.dateofbirth | date : 'dd/MM/yyyy' }}
                   </p>
                 </div>
 
@@ -352,12 +367,12 @@
                   {{ member?.riskTests?.length || 0 }} prédépistage(s) enregistré(s)
                 </p>
               </div>
-              <p-button
+              <!-- <p-button
                 label="Nouveau prédépistage"
                 icon="pi pi-plus"
                 size="small"
                 (onClick)="newScreening()"
-              />
+              /> -->
             </div>
           </ng-template>
           <ng-template pTemplate="content">
@@ -396,7 +411,10 @@
                     />
                   </td>
                   <td class="hidden lg:table-cell">
-                    <p class="text-sm text-gray-600 truncate max-w-xs" [pTooltip]="riskTest.testresult">
+                    <p
+                      class="text-sm text-gray-600 truncate max-w-xs"
+                      [pTooltip]="riskTest.testresult"
+                    >
                       {{ formatTestResult(riskTest.testresult) }}
                     </p>
                   </td>
@@ -441,12 +459,12 @@
                   {{ member?.screeningsHTA?.length || 0 }} dépistage(s) enregistré(s)
                 </p>
               </div>
-              <p-button
+              <!-- <p-button
                 label="Nouveau dépistage HTA"
                 icon="pi pi-plus"
                 size="small"
                 (onClick)="newScreening()"
-              />
+              /> -->
             </div>
           </ng-template>
           <ng-template pTemplate="content">
@@ -477,11 +495,15 @@
                     <p class="text-xs text-gray-500">mmHg</p>
                   </td>
                   <td>
-                    <p class="text-sm font-medium">{{ screening.armrightsystol }}/{{ screening.armrightdiastol }}</p>
+                    <p class="text-sm font-medium">
+                      {{ screening.armrightsystol }}/{{ screening.armrightdiastol }}
+                    </p>
                     <p class="text-xs text-gray-500">Sys/Dias</p>
                   </td>
                   <td>
-                    <p class="text-sm font-medium">{{ screening.armleftsystol }}/{{ screening.armleftdiastol }}</p>
+                    <p class="text-sm font-medium">
+                      {{ screening.armleftsystol }}/{{ screening.armleftdiastol }}
+                    </p>
                     <p class="text-xs text-gray-500">Sys/Dias</p>
                   </td>
                   <td>
@@ -493,7 +515,12 @@
                   <td class="hidden lg:table-cell">
                     <p-tag
                       [value]="screening.didhavethedisease"
-                      [severity]="screening.didhavethedisease === 'Oui' || screening.didhavethedisease === 'Yes' ? 'warn' : 'secondary'"
+                      [severity]="
+                        screening.didhavethedisease === 'Oui' ||
+                        screening.didhavethedisease === 'Yes'
+                          ? 'warn'
+                          : 'secondary'
+                      "
                     />
                   </td>
                   <td>
@@ -532,17 +559,19 @@
           <ng-template pTemplate="header">
             <div class="p-4 border-b border-gray-200 flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-semibold text-gray-900">Historique des dépistages Diabète</h3>
+                <h3 class="text-lg font-semibold text-gray-900">
+                  Historique des dépistages Diabète
+                </h3>
                 <p class="text-sm text-gray-500 mt-1">
                   {{ member?.screeningsDiabete?.length || 0 }} dépistage(s) enregistré(s)
                 </p>
               </div>
-              <p-button
+              <!-- <p-button
                 label="Nouveau dépistage Diabète"
                 icon="pi pi-plus"
                 size="small"
                 (onClick)="newScreening()"
-              />
+              /> -->
             </div>
           </ng-template>
           <ng-template pTemplate="content">
@@ -567,13 +596,23 @@
                 <tr>
                   <td>{{ screening.createdat | date : 'dd/MM/yyyy' }}</td>
                   <td>
-                    <span class="font-mono text-lg font-bold text-yellow-600">{{ screening.glucose_level }}</span>
+                    <span class="font-mono text-lg font-bold text-yellow-600">{{
+                      screening.glucose_level
+                    }}</span>
                     <span class="text-sm text-gray-500"> g/L</span>
                   </td>
                   <td>
                     <p-tag
-                      [value]="screening.eatornot === 'Non' || screening.eatornot === 'No' ? 'À jeun' : 'Non à jeun'"
-                      [severity]="screening.eatornot === 'Non' || screening.eatornot === 'No' ? 'info' : 'secondary'"
+                      [value]="
+                        screening.eatornot === 'Non' || screening.eatornot === 'No'
+                          ? 'À jeun'
+                          : 'Non à jeun'
+                      "
+                      [severity]="
+                        screening.eatornot === 'Non' || screening.eatornot === 'No'
+                          ? 'info'
+                          : 'secondary'
+                      "
                     />
                   </td>
                   <td>
@@ -585,7 +624,12 @@
                   <td class="hidden lg:table-cell">
                     <p-tag
                       [value]="screening.didhavethedisease"
-                      [severity]="screening.didhavethedisease === 'Oui' || screening.didhavethedisease === 'Yes' ? 'warn' : 'secondary'"
+                      [severity]="
+                        screening.didhavethedisease === 'Oui' ||
+                        screening.didhavethedisease === 'Yes'
+                          ? 'warn'
+                          : 'secondary'
+                      "
                     />
                   </td>
                   <td class="hidden lg:table-cell">
@@ -672,12 +716,12 @@
                   {{ member?.references?.length || 0 }} référence(s) enregistrée(s)
                 </p>
               </div>
-              <p-button
+              <!-- <p-button
                 label="Nouvelle référence"
                 icon="pi pi-plus"
                 size="small"
                 (onClick)="newReference()"
-              />
+              />-->
             </div>
           </ng-template>
           <ng-template pTemplate="content">
@@ -694,13 +738,15 @@
                       <div
                         class="w-12 h-12 rounded-full flex items-center justify-center"
                         [ngClass]="{
-                          'bg-blue-100 text-blue-600': reference.reference_type === 'Confirmation',
-                          'bg-red-100 text-red-600': reference.reference_type === 'Urgence',
-                          'bg-green-100 text-green-600': reference.reference_type === 'Consultation',
+                          'bg-blue-100 text-blue-600': reference.reference_type === 'TO_HEALTH_POST',
+                          'bg-red-100 text-red-600': reference.reference_type === 'URGENT_CALL',
                           'bg-gray-100 text-gray-600': !reference.reference_type
                         }"
                       >
-                        <i class="pi" [ngClass]="getReferenceTypeIcon(reference.reference_type)"></i>
+                        <i
+                          class="pi"
+                          [ngClass]="getReferenceTypeIcon(reference.reference_type)"
+                        ></i>
                       </div>
                       <div>
                         <h4 class="font-semibold text-gray-900">
@@ -708,24 +754,30 @@
                         </h4>
                         <p class="text-sm text-gray-500">
                           <i class="pi pi-calendar mr-1"></i>
+                          <span>Date de référence:</span>
                           {{ reference.referencedate | date : 'dd/MM/yyyy' }}
+                          <span class="mx-2">•</span>
+                          <i class="pi pi-calendar mr-1"></i>
+                          <span>Date du RDV:</span>
+                          {{ reference.appointment_date | date : 'dd/MM/yyyy' }}
                           <span class="mx-2">•</span>
                           <i class="pi pi-building mr-1"></i>
                           {{ reference.referedcenter }}
                         </p>
                         <p class="text-sm text-gray-500 mt-1">
                           <i class="pi pi-user mr-1"></i>
-                          Référé par: {{ reference.referedby }}
+                          Référé par: {{ reference.workerId.first_name }} {{ reference.workerId.last_name }}
                         </p>
+                        <!-- <p class="text-sm text-gray-500 mt-1">
+                          <i class="pi pi-user mr-1"></i>
+                          Référé par: {{ reference.workerId.first_name }} {{ reference.workerId.last_name }}
+                        </p> -->
                       </div>
                     </div>
                     <div class="flex items-center gap-3">
+                      <p-tag [value]="getReferenceTypeLabel(reference.reference_type)" severity="secondary" />
                       <p-tag
-                        [value]="reference.reference_type"
-                        severity="secondary"
-                      />
-                      <p-tag
-                        [value]="reference.status"
+                        [value]="getReferenceStatusLabel(reference.status)"
                         [severity]="getReferenceStatusSeverity(reference.status)"
                       />
                       <p-button
@@ -756,16 +808,24 @@
                         <div
                           class="w-8 h-8 rounded-full flex items-center justify-center"
                           [ngClass]="{
-                            'bg-green-100 text-green-600': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
-                            'bg-yellow-100 text-yellow-600': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                            'bg-green-100 text-green-600':
+                              following.patientattended === 'Oui' &&
+                              following.patientreceivcare === 'Oui',
+                            'bg-yellow-100 text-yellow-600':
+                              following.patientattended === 'Oui' &&
+                              following.patientreceivcare !== 'Oui',
                             'bg-red-100 text-red-600': following.patientattended !== 'Oui'
                           }"
                         >
                           <i
                             class="pi"
                             [ngClass]="{
-                              'pi-check': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
-                              'pi-exclamation-triangle': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                              'pi-check':
+                                following.patientattended === 'Oui' &&
+                                following.patientreceivcare === 'Oui',
+                              'pi-exclamation-triangle':
+                                following.patientattended === 'Oui' &&
+                                following.patientreceivcare !== 'Oui',
                               'pi-times': following.patientattended !== 'Oui'
                             }"
                           ></i>
@@ -781,8 +841,18 @@
                       </div>
                       <div class="flex items-center gap-2">
                         <p-tag
-                          [value]="getFollowingStatusLabel(following.patientattended, following.patientreceivcare)"
-                          [severity]="getFollowingStatusSeverity(following.patientattended, following.patientreceivcare)"
+                          [value]="
+                            getFollowingStatusLabel(
+                              following.patientattended,
+                              following.patientreceivcare
+                            )
+                          "
+                          [severity]="
+                            getFollowingStatusSeverity(
+                              following.patientattended,
+                              following.patientreceivcare
+                            )
+                          "
                           [rounded]="true"
                         />
                         <p-button
@@ -828,7 +898,8 @@
                 <i class="pi pi-inbox text-gray-400 text-5xl mb-4"></i>
                 <p class="text-gray-500 text-lg">Aucune référence enregistrée</p>
                 <p class="text-gray-400 text-sm mt-1">
-                  Les références permettent de suivre les patients orientés vers d'autres structures de santé
+                  Les références permettent de suivre les patients orientés vers d'autres structures
+                  de santé
                 </p>
                 <p-button
                   label="Créer une référence"
@@ -837,6 +908,206 @@
                   (onClick)="newReference()"
                 />
               </div>
+            </div>
+          </ng-template>
+        </p-card>
+      </div>
+    </p-tabpanel>
+
+    <!-- Tab: Sensibilisation -->
+    <p-tabpanel value="Sensibilisation">
+      <div class="mt-6">
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">Sensibilisation du patient</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  Évaluation des connaissances sur l'hypertension et le diabète
+                </p>
+              </div>
+              <!-- <p-button
+                label="Nouvelle évaluation"
+                icon="pi pi-plus"
+                size="small"
+                (onClick)="openNewAwarenessModal()"
+              /> -->
+            </div>
+          </ng-template>
+          <ng-template pTemplate="content">
+            <div *ngIf="member?.awarenessRecords " class="space-y-4">
+              <div
+                *ngFor="let awareness of member?.awarenessRecords"
+                class="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 transition-colors"
+              >
+                <!-- En-tête de l'évaluation -->
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b border-gray-200">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="flex items-center gap-3">
+                        <i class="pi pi-book text-blue-600 text-2xl"></i>
+                        <div>
+                          <h4 class="font-semibold text-gray-900">
+                            Évaluation du {{ awareness.registrationDate | date : 'dd/MM/yyyy' }}
+                          </h4>
+                          <p class="text-sm text-gray-600 mt-1">
+                            <i class="pi pi-user mr-1"></i>
+                            Enregistré par: Agent de santé
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <p-tag
+                      [value]="getAwarenessKnowledgeLevel(awareness).label"
+                      [severity]="getAwarenessKnowledgeLevel(awareness).severity"
+                      [rounded]="true"
+                    />
+                  </div>
+                </div>
+
+                <!-- Contenu de l'évaluation -->
+                <div class="p-6">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Connaissances sur l'hypertension -->
+                    <div class="space-y-4">
+                      <h5 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="pi pi-heart text-red-500"></i>
+                        Hypertension
+                      </h5>
+
+                      <div class="space-y-3">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                          <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                            Connaît l'hypertension ?
+                          </p>
+                          <p class="text-sm text-gray-900">
+                            <i
+                              class="pi mr-2"
+                              [ngClass]="{
+                                'pi-check-circle text-green-500': awareness.hypertension_knowledge?.includes('Oui, ils savent ce que'),
+                                'pi-minus-circle text-yellow-500': awareness.hypertension_knowledge?.includes('Oui, ils en savent un peu'),
+                                'pi-times-circle text-red-500': awareness.hypertension_knowledge?.includes('Non')
+                              }"
+                            ></i>
+                            {{ awareness.hypertension_knowledge }}
+                          </p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3">
+                          <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                            Connaît les symptômes ?
+                          </p>
+                          <p class="text-sm text-gray-900">
+                            <i
+                              class="pi mr-2"
+                              [ngClass]="{
+                                'pi-check-circle text-green-500': awareness.hypertension_symptoms?.includes('plus de trois'),
+                                'pi-minus-circle text-yellow-500': awareness.hypertension_symptoms?.includes('un à trois'),
+                                'pi-times-circle text-red-500': awareness.hypertension_symptoms?.includes('aucun')
+                              }"
+                            ></i>
+                            {{ awareness.hypertension_symptoms }}
+                          </p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3">
+                          <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                            Sait quoi faire ?
+                          </p>
+                          <p class="text-sm text-gray-900">
+                            <i
+                              class="pi mr-2"
+                              [ngClass]="{
+                                'pi-check-circle text-green-500': awareness.hypertension_action?.includes('Oui'),
+                                'pi-times-circle text-red-500': awareness.hypertension_action?.includes('Non')
+                              }"
+                            ></i>
+                            {{ awareness.hypertension_action }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Connaissances sur le diabète -->
+                    <div class="space-y-4">
+                      <h5 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="pi pi-sun text-yellow-500"></i>
+                        Diabète
+                      </h5>
+
+                      <div class="space-y-3">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                          <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                            Connaît le diabète ?
+                          </p>
+                          <p class="text-sm text-gray-900">
+                            <i
+                              class="pi mr-2"
+                              [ngClass]="{
+                                'pi-check-circle text-green-500': awareness.diabetes_knowledge?.includes('Oui, je sais ce que'),
+                                'pi-minus-circle text-yellow-500': awareness.diabetes_knowledge?.includes('Oui, j\'en sais un peu'),
+                                'pi-times-circle text-red-500': awareness.diabetes_knowledge?.includes('Non')
+                              }"
+                            ></i>
+                            {{ awareness.diabetes_knowledge }}
+                          </p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3">
+                          <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                            Connaît les signes ?
+                          </p>
+                          <p class="text-sm text-gray-900">
+                            <i
+                              class="pi mr-2"
+                              [ngClass]="{
+                                'pi-check-circle text-green-500': awareness.diabetes_signs?.includes('Oui, je sais ce que'),
+                                'pi-minus-circle text-yellow-500': awareness.diabetes_signs?.includes('Oui, j\'en sais un peu'),
+                                'pi-times-circle text-red-500': awareness.diabetes_signs?.includes('Non')
+                              }"
+                            ></i>
+                            {{ awareness.diabetes_signs }}
+                          </p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3">
+                          <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                            Sait quoi faire ?
+                          </p>
+                          <p class="text-sm text-gray-900">
+                            <i
+                              class="pi mr-2"
+                              [ngClass]="{
+                                'pi-check-circle text-green-500': awareness.diabetes_action?.includes('Oui'),
+                                'pi-times-circle text-red-500': awareness.diabetes_action?.includes('Non')
+                              }"
+                            ></i>
+                            {{ awareness.diabetes_action }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message si pas d'évaluation -->
+            <div
+              *ngIf="!member?.awarenessRecords"
+              class="text-center py-12"
+            >
+              <i class="pi pi-book text-gray-400 text-5xl mb-4"></i>
+              <p class="text-gray-500 text-lg">Aucune évaluation de sensibilisation enregistrée</p>
+              <p class="text-gray-400 text-sm mt-1">
+                L'évaluation permet de mesurer les connaissances du patient sur l'hypertension et le diabète
+              </p>
+              <p-button
+                label="Créer une évaluation"
+                icon="pi pi-plus"
+                class="mt-4"
+                (onClick)="openNewAwarenessModal()"
+              />
             </div>
           </ng-template>
         </p-card>
@@ -863,22 +1134,24 @@
       <div
         class="w-16 h-16 rounded-full flex items-center justify-center"
         [ngClass]="{
-          'bg-blue-100 text-blue-600': selectedReference.reference_type === 'Confirmation',
-          'bg-red-100 text-red-600': selectedReference.reference_type === 'Urgence',
-          'bg-green-100 text-green-600': selectedReference.reference_type === 'Consultation',
+          'bg-blue-100 text-blue-600': selectedReference.reference_type === 'TO_HEALTH_POST',
+          'bg-red-100 text-red-600': selectedReference.reference_type === 'URGENT_CALL',
           'bg-gray-100 text-gray-600': !selectedReference.reference_type
         }"
       >
-        <i class="pi text-2xl" [ngClass]="getReferenceTypeIcon(selectedReference.reference_type)"></i>
+        <i
+          class="pi text-2xl"
+          [ngClass]="getReferenceTypeIcon(selectedReference.reference_type)"
+        ></i>
       </div>
       <div class="flex-1">
         <h3 class="text-xl font-semibold text-gray-900">
           {{ selectedReference.referenceillness || 'Référence' }}
         </h3>
         <div class="flex items-center gap-2 mt-2">
-          <p-tag [value]="selectedReference.reference_type" severity="secondary" />
+          <p-tag [value]="getReferenceTypeLabel(selectedReference.reference_type)" severity="secondary" />
           <p-tag
-            [value]="selectedReference.status"
+            [value]="getReferenceStatusLabel(selectedReference.status)"
             [severity]="getReferenceStatusSeverity(selectedReference.status)"
           />
         </div>
@@ -891,7 +1164,9 @@
         <span class="block text-sm font-medium text-gray-500 mb-1">Date de référence</span>
         <div class="flex items-center gap-2">
           <i class="pi pi-calendar text-gray-400"></i>
-          <span class="text-gray-900">{{ selectedReference.referencedate | date : 'dd/MM/yyyy' }}</span>
+          <span class="text-gray-900">{{
+            selectedReference.referencedate | date : 'dd/MM/yyyy'
+          }}</span>
         </div>
       </div>
       <div>
@@ -905,7 +1180,7 @@
         <span class="block text-sm font-medium text-gray-500 mb-1">Référé par</span>
         <div class="flex items-center gap-2">
           <i class="pi pi-user text-gray-400"></i>
-          <span class="text-gray-900">{{ selectedReference.referedby || '—' }}</span>
+          <span class="text-gray-900">{{ selectedReference.workerId.first_name }} {{ selectedReference.workerId.last_name }}</span>
         </div>
       </div>
       <div>
@@ -919,14 +1194,27 @@
         <span class="block text-sm font-medium text-gray-500 mb-1">Date de création</span>
         <div class="flex items-center gap-2">
           <i class="pi pi-clock text-gray-400"></i>
-          <span class="text-gray-900">{{ selectedReference.createdat | date : 'dd/MM/yyyy HH:mm' }}</span>
+          <span class="text-gray-900">{{
+            selectedReference.createdat | date : 'dd/MM/yyyy HH:mm'
+          }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Date du RDV</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-clock text-gray-400"></i>
+          <span class="text-gray-900">{{
+            selectedReference.appointment_date | date : 'dd/MM/yyyy HH:mm'
+          }}</span>
         </div>
       </div>
       <div>
         <span class="block text-sm font-medium text-gray-500 mb-1">Nombre de suivis</span>
         <div class="flex items-center gap-2">
           <i class="pi pi-list text-gray-400"></i>
-          <span class="text-gray-900 font-semibold">{{ selectedReference.followings?.length || 0 }}</span>
+          <span class="text-gray-900 font-semibold">{{
+            selectedReference.followings?.length || 0
+          }}</span>
         </div>
       </div>
     </div>
@@ -940,37 +1228,98 @@
       <div class="space-y-2 max-h-48 overflow-y-auto">
         <div
           *ngFor="let following of selectedReference.followings"
-          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+          class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
           (click)="viewFollowing(following)"
         >
-          <div class="flex items-center gap-3">
+          <div class="flex items-start gap-3">
             <div
-              class="w-8 h-8 rounded-full flex items-center justify-center"
+              class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
               [ngClass]="{
-                'bg-green-100 text-green-600': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
-                'bg-yellow-100 text-yellow-600': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                'bg-green-100 text-green-600':
+                  following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
+                'bg-yellow-100 text-yellow-600':
+                  following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
                 'bg-red-100 text-red-600': following.patientattended !== 'Oui'
               }"
             >
               <i
-                class="pi text-sm"
+                class="pi text-lg"
                 [ngClass]="{
-                  'pi-check': following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
-                  'pi-exclamation-triangle': following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
+                  'pi-check':
+                    following.patientattended === 'Oui' && following.patientreceivcare === 'Oui',
+                  'pi-exclamation-triangle':
+                    following.patientattended === 'Oui' && following.patientreceivcare !== 'Oui',
                   'pi-times': following.patientattended !== 'Oui'
                 }"
               ></i>
             </div>
-            <div>
-              <p class="text-sm font-medium text-gray-900">{{ following.daterefered | date : 'dd/MM/yyyy' }}</p>
-              <p class="text-xs text-gray-500">{{ following.referedwhere }}</p>
+
+            <div class="flex-1">
+              <!-- Header with date and type -->
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <h5 class="font-semibold text-gray-900">
+                    {{ following.daterefered | date : 'dd/MM/yyyy' }}
+                  </h5>
+                  <span *ngIf="following.type" class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                    <span *ngIf="following.type === 'REFERAL_TO_DOCTOR'">Référence au Médecin</span>
+                    <span *ngIf="following.type === 'COUNTER_REFERAL_TO_AC'">Contre-référence à l'ACS</span>
+                    <span *ngIf="following.type === 'COUNTER_REFERAL_TO_ICP'">Contre-référence à l'ICP</span>
+                  </span>
+                </div>
+                <p-tag
+                  [value]="
+                    getFollowingStatusLabel(following.patientattended, following.patientreceivcare)
+                  "
+                  [severity]="
+                    getFollowingStatusSeverity(following.patientattended, following.patientreceivcare)
+                  "
+                  [rounded]="true"
+                />
+              </div>
+
+              <!-- Location -->
+              <div class="flex items-center gap-2 mb-3">
+                <i class="pi pi-building text-gray-400"></i>
+                <span class="text-sm text-gray-600">{{ following.referedwhere || 'Lieu non spécifié' }}</span>
+              </div>
+
+              <!-- Details grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div *ngIf="following.referedby" class="flex items-center gap-2">
+                  <i class="pi pi-user text-gray-400"></i>
+                  <span class="text-gray-600">
+                    <span class="font-medium">Référé par:</span>
+                    {{ following.referedby.first_name }} {{ following.referedby.last_name }}
+                  </span>
+                </div>
+
+                <div *ngIf="following.appointment_date" class="flex items-center gap-2">
+                  <i class="pi pi-calendar text-gray-400"></i>
+                  <span class="text-gray-600">
+                    <span class="font-medium">RDV:</span>
+                    {{ following.appointment_date | date : 'dd/MM/yyyy' }}
+                  </span>
+                </div>
+
+                <div *ngIf="following.workerIdReferedTo" class="flex items-center gap-2">
+                  <i class="pi pi-arrow-right text-gray-400"></i>
+                  <span class="text-gray-600">
+                    <span class="font-medium">Suivi par:</span>
+                    {{ following.workerIdReferedTo.first_name }} {{ following.workerIdReferedTo.last_name }}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-clock text-gray-400"></i>
+                  <span class="text-gray-600">
+                    <span class="font-medium">Créé:</span>
+                    {{ following.createdat | date : 'dd/MM/yyyy HH:mm' }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-          <p-tag
-            [value]="getFollowingStatusLabel(following.patientattended, following.patientreceivcare)"
-            [severity]="getFollowingStatusSeverity(following.patientattended, following.patientreceivcare)"
-            [rounded]="true"
-          />
         </div>
       </div>
     </div>
@@ -1006,10 +1355,15 @@
 >
   <div class="space-y-6" *ngIf="selectedFollowing">
     <!-- Statut principal -->
-    <div class="flex items-center justify-center p-6 rounded-lg"
+    <div
+      class="flex items-center justify-center p-6 rounded-lg"
       [ngClass]="{
-        'bg-green-50': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
-        'bg-yellow-50': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+        'bg-green-50':
+          selectedFollowing.patientattended === 'Oui' &&
+          selectedFollowing.patientreceivcare === 'Oui',
+        'bg-yellow-50':
+          selectedFollowing.patientattended === 'Oui' &&
+          selectedFollowing.patientreceivcare !== 'Oui',
         'bg-red-50': selectedFollowing.patientattended !== 'Oui'
       }"
     >
@@ -1017,28 +1371,46 @@
         <div
           class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
           [ngClass]="{
-            'bg-green-500 text-white': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
-            'bg-yellow-500 text-white': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+            'bg-green-500 text-white':
+              selectedFollowing.patientattended === 'Oui' &&
+              selectedFollowing.patientreceivcare === 'Oui',
+            'bg-yellow-500 text-white':
+              selectedFollowing.patientattended === 'Oui' &&
+              selectedFollowing.patientreceivcare !== 'Oui',
             'bg-red-500 text-white': selectedFollowing.patientattended !== 'Oui'
           }"
         >
           <i
             class="pi text-2xl"
             [ngClass]="{
-              'pi-check': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
-              'pi-exclamation-triangle': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+              'pi-check':
+                selectedFollowing.patientattended === 'Oui' &&
+                selectedFollowing.patientreceivcare === 'Oui',
+              'pi-exclamation-triangle':
+                selectedFollowing.patientattended === 'Oui' &&
+                selectedFollowing.patientreceivcare !== 'Oui',
               'pi-times': selectedFollowing.patientattended !== 'Oui'
             }"
           ></i>
         </div>
-        <p class="text-lg font-semibold"
+        <p
+          class="text-lg font-semibold"
           [ngClass]="{
-            'text-green-800': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare === 'Oui',
-            'text-yellow-800': selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui',
+            'text-green-800':
+              selectedFollowing.patientattended === 'Oui' &&
+              selectedFollowing.patientreceivcare === 'Oui',
+            'text-yellow-800':
+              selectedFollowing.patientattended === 'Oui' &&
+              selectedFollowing.patientreceivcare !== 'Oui',
             'text-red-800': selectedFollowing.patientattended !== 'Oui'
           }"
         >
-          {{ getFollowingStatusLabel(selectedFollowing.patientattended, selectedFollowing.patientreceivcare) }}
+          {{
+            getFollowingStatusLabel(
+              selectedFollowing.patientattended,
+              selectedFollowing.patientreceivcare
+            )
+          }}
         </p>
       </div>
     </div>
@@ -1049,7 +1421,9 @@
         <span class="block text-sm font-medium text-gray-500 mb-1">Date du suivi</span>
         <div class="flex items-center gap-2">
           <i class="pi pi-calendar text-gray-400"></i>
-          <span class="text-gray-900">{{ selectedFollowing.daterefered | date : 'dd/MM/yyyy' }}</span>
+          <span class="text-gray-900">{{
+            selectedFollowing.daterefered | date : 'dd/MM/yyyy'
+          }}</span>
         </div>
       </div>
       <div>
@@ -1063,14 +1437,23 @@
         <span class="block text-sm font-medium text-gray-500 mb-1">Suivi par</span>
         <div class="flex items-center gap-2">
           <i class="pi pi-user text-gray-400"></i>
-          <span class="text-gray-900">{{ selectedFollowing.referedby || '—' }}</span>
+          <span class="text-gray-900">{{ selectedFollowing.referedby ? selectedFollowing.referedby.first_name + ' ' + selectedFollowing.referedby.last_name : '—' }}</span>
         </div>
       </div>
       <div>
         <span class="block text-sm font-medium text-gray-500 mb-1">Date de création</span>
         <div class="flex items-center gap-2">
           <i class="pi pi-clock text-gray-400"></i>
-          <span class="text-gray-900">{{ selectedFollowing.createdat | date : 'dd/MM/yyyy HH:mm' }}</span>
+          <span class="text-gray-900">{{
+            selectedFollowing.createdat | date : 'dd/MM/yyyy HH:mm'
+          }}</span>
+        </div>
+      </div>
+      <div>
+        <span class="block text-sm font-medium text-gray-500 mb-1">Prochaine personne a suivre</span>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-clock text-gray-400"></i>
+          <span class="text-gray-900">{{ selectedFollowing.workerIdReferedTo ? selectedFollowing.workerIdReferedTo.first_name + ' ' + selectedFollowing.workerIdReferedTo.last_name : '—' }}</span>
         </div>
       </div>
     </div>
@@ -1081,8 +1464,9 @@
     <div class="space-y-4">
       <h4 class="text-md font-semibold text-gray-800">Résultats du suivi</h4>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div class="p-3 rounded-lg"
+      <div class="grid grid-cols-1 gap-4">
+        <div
+          class="p-3 rounded-lg"
           [ngClass]="{
             'bg-green-50': selectedFollowing.patientattended === 'Oui',
             'bg-red-50': selectedFollowing.patientattended !== 'Oui'
@@ -1090,13 +1474,15 @@
         >
           <span class="block text-sm text-gray-500 mb-1">Patient s'est présenté ?</span>
           <div class="flex items-center gap-2">
-            <i class="pi"
+            <i
+              class="pi"
               [ngClass]="{
                 'pi-check-circle text-green-600': selectedFollowing.patientattended === 'Oui',
                 'pi-times-circle text-red-600': selectedFollowing.patientattended !== 'Oui'
               }"
             ></i>
-            <span class="font-semibold"
+            <span
+              class="font-semibold"
               [ngClass]="{
                 'text-green-800': selectedFollowing.patientattended === 'Oui',
                 'text-red-800': selectedFollowing.patientattended !== 'Oui'
@@ -1107,7 +1493,8 @@
           </div>
         </div>
 
-        <div class="p-3 rounded-lg"
+        <div
+          class="p-3 rounded-lg"
           [ngClass]="{
             'bg-green-50': selectedFollowing.patientreceivcare === 'Oui',
             'bg-red-50': selectedFollowing.patientreceivcare === 'Non',
@@ -1116,14 +1503,16 @@
         >
           <span class="block text-sm text-gray-500 mb-1">Soins reçus ?</span>
           <div class="flex items-center gap-2">
-            <i class="pi"
+            <i
+              class="pi"
               [ngClass]="{
                 'pi-check-circle text-green-600': selectedFollowing.patientreceivcare === 'Oui',
                 'pi-times-circle text-red-600': selectedFollowing.patientreceivcare === 'Non',
                 'pi-minus-circle text-gray-400': !selectedFollowing.patientreceivcare
               }"
             ></i>
-            <span class="font-semibold"
+            <span
+              class="font-semibold"
               [ngClass]="{
                 'text-green-800': selectedFollowing.patientreceivcare === 'Oui',
                 'text-red-800': selectedFollowing.patientreceivcare === 'Non',
@@ -1137,7 +1526,10 @@
       </div>
 
       <!-- Raison de non-présentation -->
-      <div *ngIf="selectedFollowing.patientattended !== 'Oui' && selectedFollowing.whydidnotattd" class="p-3 bg-red-50 rounded-lg">
+      <div
+        *ngIf="selectedFollowing.patientattended !== 'Oui' && selectedFollowing.whydidnotattd"
+        class="p-3 bg-red-50 rounded-lg"
+      >
         <span class="block text-sm font-medium text-red-700 mb-1">
           <i class="pi pi-info-circle mr-1"></i>
           Raison de non-présentation
@@ -1146,22 +1538,98 @@
       </div>
 
       <!-- Raison de non-soins -->
-      <div *ngIf="selectedFollowing.patientattended === 'Oui' && selectedFollowing.patientreceivcare !== 'Oui' && selectedFollowing.whydidnotreceivcare" class="p-3 bg-yellow-50 rounded-lg">
+      <div
+        *ngIf="
+          selectedFollowing.patientattended === 'Oui' &&
+          selectedFollowing.patientreceivcare !== 'Oui' &&
+          selectedFollowing.whydidnotreceivcare
+        "
+        class="p-3 bg-yellow-50 rounded-lg"
+      >
         <span class="block text-sm font-medium text-yellow-700 mb-1">
           <i class="pi pi-info-circle mr-1"></i>
           Raison de non-soins
         </span>
         <p class="text-yellow-900">{{ selectedFollowing.whydidnotreceivcare }}</p>
       </div>
+
+      <!-- Traitement proposé -->
+      <div
+        *ngIf="selectedFollowing.proposedTreatment"
+        class="p-3 bg-blue-50 rounded-lg"
+      >
+        <span class="block text-sm font-medium text-blue-700 mb-1">
+          <i class="pi pi-medical mr-1"></i>
+          Traitement proposé
+        </span>
+        <p class="text-blue-900">{{ selectedFollowing.proposedTreatment }}</p>
+      </div>
+
+      <!-- Type de suivi -->
+      <div
+        *ngIf="selectedFollowing.type"
+        class="p-3 bg-gray-50 rounded-lg"
+      >
+        <span class="block text-sm font-medium text-gray-700 mb-1">
+          <i class="pi pi-tag mr-1"></i>
+          Type de suivi
+        </span>
+        <p class="text-gray-900">
+          <span *ngIf="selectedFollowing.type === 'REFERAL_TO_DOCTOR'">Référence au Médecin</span>
+          <span *ngIf="selectedFollowing.type === 'COUNTER_REFERAL_TO_AC'">Contre-référence à l'ACS</span>
+          <span *ngIf="selectedFollowing.type === 'COUNTER_REFERAL_TO_ICP'">Contre-référence à l'ICP</span>
+        </p>
+      </div>
+
+      <!-- Raison et type de référence (pour REFERAL_TO_DOCTOR) -->
+      <div
+        *ngIf="selectedFollowing.type === 'REFERAL_TO_DOCTOR' && (selectedFollowing.refReason || selectedFollowing.refType)"
+        class="p-3 bg-purple-50 rounded-lg"
+      >
+        <span class="block text-sm font-medium text-purple-700 mb-2">
+          <i class="pi pi-arrow-right mr-1"></i>
+          Détails de la référence
+        </span>
+        <div class="space-y-1">
+          <p class="text-purple-900 text-sm" *ngIf="selectedFollowing.refReason">
+            <strong>Raison:</strong> {{ selectedFollowing.refReason }}
+          </p>
+          <p class="text-purple-900 text-sm" *ngIf="selectedFollowing.refType">
+            <strong>Type:</strong>
+            <span *ngIf="selectedFollowing.refType === 'TELECONSULTATION'">Téléconsultation</span>
+            <span *ngIf="selectedFollowing.refType === 'IN_PERSON'">Référence en personne</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions précédentes (pour REFERAL_TO_DOCTOR) -->
+      <div
+        *ngIf="selectedFollowing.type === 'REFERAL_TO_DOCTOR' && selectedFollowing.refPreviousActions"
+        class="p-3 bg-green-50 rounded-lg"
+      >
+        <span class="block text-sm font-medium text-green-700 mb-1">
+          <i class="pi pi-history mr-1"></i>
+          Actions précédentes
+        </span>
+        <p class="text-green-900">{{ selectedFollowing.refPreviousActions }}</p>
+      </div>
+
+      <!-- Date de rendez-vous -->
+      <div
+        *ngIf="selectedFollowing.appointment_date"
+        class="p-3 bg-orange-50 rounded-lg"
+      >
+        <span class="block text-sm font-medium text-orange-700 mb-1">
+          <i class="pi pi-calendar mr-1"></i>
+          Date de rendez-vous
+        </span>
+        <p class="text-orange-900">{{ selectedFollowing.appointment_date | date : 'dd/MM/yyyy' }}</p>
+      </div>
     </div>
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button
-      label="Fermer"
-      icon="pi pi-times"
-      (onClick)="closeFollowingDetailModal()"
-    />
+    <p-button label="Fermer" icon="pi pi-times" (onClick)="closeFollowingDetailModal()" />
   </ng-template>
 </p-dialog>
 
@@ -1170,7 +1638,7 @@
   header="Ajouter un nouveau suivi"
   [(visible)]="showNewFollowingModal"
   [modal]="true"
-  [style]="{ width: '600px' }"
+  [style]="{ width: '700px' }"
   [draggable]="false"
   [resizable]="false"
   (onHide)="closeNewFollowingModal()"
@@ -1181,123 +1649,247 @@
       <div class="flex items-center gap-3">
         <i class="pi pi-info-circle text-blue-500 text-xl"></i>
         <div>
-          <p class="text-sm font-medium text-blue-900">Référence : {{ selectedReference.referenceillness }}</p>
-          <p class="text-xs text-blue-700">{{ selectedReference.referedcenter }} - {{ selectedReference.referencedate | date : 'dd/MM/yyyy' }}</p>
+          <p class="text-sm font-medium text-blue-900">
+            Référence : {{ selectedReference.referenceillness }}
+          </p>
+          <p class="text-xs text-blue-700">
+            {{ selectedReference.referedcenter }} -
+            {{ selectedReference.referencedate | date : 'dd/MM/yyyy' }}
+          </p>
         </div>
       </div>
     </div>
 
     <!-- Formulaire -->
     <div class="grid grid-cols-2 gap-4">
-      <!-- Date du suivi -->
-      <div class="col-span-2 md:col-span-1">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="daterefered">
-          Date du suivi <span class="text-red-500">*</span>
-        </label>
-        <p-datepicker
-          id="daterefered"
-          [(ngModel)]="newFollowingForm.daterefered"
-          [showIcon]="true"
-          dateFormat="dd/mm/yy"
-          styleClass="w-full"
-          placeholder="Sélectionner une date"
-        />
-      </div>
-
-      <!-- Lieu du suivi -->
-      <div class="col-span-2 md:col-span-1">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="referedwhere">
-          Lieu du suivi <span class="text-red-500">*</span>
-        </label>
-        <input
-          id="referedwhere"
-          type="text"
-          pInputText
-          [(ngModel)]="newFollowingForm.referedwhere"
-          class="w-full"
-          placeholder="Centre de santé, hôpital..."
-        />
-      </div>
-
-      <!-- Suivi effectué par -->
+      <!-- Type de suivi -->
       <div class="col-span-2">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="referedby">
-          Suivi effectué par
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="followingType">
+          Type de suivi <span class="text-red-500">*</span>
         </label>
-        <input
-          id="referedby"
-          type="text"
-          pInputText
-          [(ngModel)]="newFollowingForm.referedby"
-          class="w-full"
-          placeholder="Nom de l'agent de santé"
+        <p-select
+          id="followingType"
+          [(ngModel)]="newFollowingForm.type"
+          [options]="followingTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionnez le type de suivi"
+          styleClass="w-full"
+          appendTo="body"
         />
       </div>
 
-      <!-- Patient s'est présenté -->
-      <div class="col-span-2 md:col-span-1">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="patientattended">
-          Le patient s'est présenté ? <span class="text-red-500">*</span>
-        </label>
-        <p-select
-          id="patientattended"
-          [(ngModel)]="newFollowingForm.patientattended"
-          [options]="attendanceOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner"
-          styleClass="w-full"
-        />
-      </div>
+      <!-- REFERAL_TO_DOCTOR Fields -->
+      <ng-container *ngIf="newFollowingForm.type === 'REFERAL_TO_DOCTOR'">
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="doctorSelect">
+            Médecin référent <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="doctorSelect"
+            [(ngModel)]="newFollowingForm.workerIdReferedTo"
+            [options]="doctors"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez un médecin"
+            styleClass="w-full"
+            [filter]="true"
+            filterPlaceholder="Rechercher..."
+          />
+        </div>
 
-      <!-- Soins reçus -->
-      <div class="col-span-2 md:col-span-1">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="patientreceivcare">
-          Le patient a reçu des soins ?
-        </label>
-        <p-select
-          id="patientreceivcare"
-          [(ngModel)]="newFollowingForm.patientreceivcare"
-          [options]="careReceivedOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner"
-          styleClass="w-full"
-          [disabled]="newFollowingForm.patientattended !== 'Oui'"
-        />
-      </div>
+        <div class="col-span-2 md:col-span-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="refReason">
+            Raison de la référence <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="refReason"
+            [(ngModel)]="newFollowingForm.refReason"
+            [options]="referalReasons"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez la raison"
+            styleClass="w-full"
+          />
+        </div>
 
-      <!-- Raison de non-présentation -->
-      <div class="col-span-2" *ngIf="newFollowingForm.patientattended === 'Non'">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="whydidnotattd">
-          Raison de la non-présentation
-        </label>
-        <p-select
-          id="whydidnotattd"
-          [(ngModel)]="newFollowingForm.whydidnotattd"
-          [options]="nonAttendanceReasons"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner une raison"
-          styleClass="w-full"
-        />
-      </div>
+        <div class="col-span-2 md:col-span-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="refType">
+            Type de référence <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="refType"
+            [(ngModel)]="newFollowingForm.refType"
+            [options]="referalTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez le type"
+            styleClass="w-full"
+          />
+        </div>
 
-      <!-- Raison de non-soins -->
-      <div class="col-span-2" *ngIf="newFollowingForm.patientattended === 'Oui' && newFollowingForm.patientreceivcare === 'Non'">
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="whydidnotreceivcare">
-          Raison de la non-réception des soins
-        </label>
-        <p-select
-          id="whydidnotreceivcare"
-          [(ngModel)]="newFollowingForm.whydidnotreceivcare"
-          [options]="noCareReasons"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner une raison"
-          styleClass="w-full"
-        />
-      </div>
+        <div class="col-span-2 md:col-span-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="appointmentDate">
+            Date de rendez-vous <span class="text-red-500">*</span>
+          </label>
+          <p-datepicker
+            id="appointmentDate"
+            [(ngModel)]="newFollowingForm.appointment_date"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            styleClass="w-full"
+            placeholder="Sélectionnez la date"
+          />
+        </div>
+
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="previousActions">
+            Actions précédentes
+          </label>
+          <textarea
+            id="previousActions"
+            pTextarea
+            [(ngModel)]="newFollowingForm.refPreviousActions"
+            rows="3"
+            class="w-full"
+            placeholder="Décrivez les actions précédentes prises..."
+          ></textarea>
+        </div>
+      </ng-container>
+
+      <!-- COUNTER_REFERAL_TO_AC Fields -->
+      <ng-container *ngIf="newFollowingForm.type === 'COUNTER_REFERAL_TO_AC'">
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Traitements proposés <span class="text-red-500">*</span>
+          </label>
+          <div class="space-y-2 p-3 border border-gray-200 rounded-md">
+            <div *ngFor="let treatment of treatmentProposedOptions" class="flex items-center">
+              <input
+                type="checkbox"
+                [id]="'treatment-' + treatment.value"
+                [checked]="isTreatmentSelected(treatment.value)"
+                (change)="onTreatmentSelectionChange(treatment.value)"
+                class="mr-2 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <label [for]="'treatment-' + treatment.value" class="cursor-pointer text-sm">
+                {{ treatment.label }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-2 md:col-span-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="appointmentDateAC">
+            Date du prochain rendez-vous <span class="text-red-500">*</span>
+          </label>
+          <p-datepicker
+            id="appointmentDateAC"
+            [(ngModel)]="newFollowingForm.appointment_date"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            styleClass="w-full"
+            placeholder="Sélectionnez la date"
+            appendTo="body"
+          />
+        </div>
+      </ng-container>
+
+      <!-- COUNTER_REFERAL_TO_ICP Fields -->
+      <ng-container *ngIf="newFollowingForm.type === 'COUNTER_REFERAL_TO_ICP'">
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="proposedTreatment">
+            Traitement proposé <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            id="proposedTreatment"
+            pTextarea
+            [(ngModel)]="newFollowingForm.proposedTreatment"
+            rows="3"
+            class="w-full"
+            placeholder="Décrivez le traitement proposé..."
+          ></textarea>
+        </div>
+      </ng-container>
+
+      <!-- Common Follow-up Result Fields (shown after type selection) -->
+      <ng-container *ngIf="newFollowingForm.type">
+        <div class="col-span-2">
+          <p-divider />
+        </div>
+
+        <div class="col-span-2 md:col-span-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="patientattended">
+            Le patient s'est-il présenté ?
+          </label>
+          <p-select
+            id="patientattended"
+            [(ngModel)]="newFollowingForm.patientattended"
+            [options]="attendanceOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+
+        <div class="col-span-2 md:col-span-1" *ngIf="newFollowingForm.patientattended === 'Non'">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="whydidnotattd">
+            Raison de non-présentation
+          </label>
+          <p-select
+            id="whydidnotattd"
+            [(ngModel)]="newFollowingForm.whydidnotattd"
+            [options]="nonAttendanceReasons"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+
+        <div class="col-span-1">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="patientreceivcare">
+            Commentaires et conseils
+          </label>
+          <textarea
+            id="previousActions"
+            pTextarea
+            [(ngModel)]="newFollowingForm.patientreceivcare"
+            rows="3"
+            class="w-full"
+            placeholder="Commentaires et conseils..."
+          ></textarea>
+          <!-- <p-select
+            id="patientreceivcare"
+            [(ngModel)]="newFollowingForm.patientreceivcare"
+            [options]="careReceivedOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner"
+            styleClass="w-full"
+            appendTo="body"
+          /> -->
+        </div>
+
+        <div class="col-span-2 md:col-span-1" *ngIf="newFollowingForm.patientattended === 'Oui' && newFollowingForm.patientreceivcare === 'Non'">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="whydidnotreceivcare">
+            Raison de non-soins
+          </label>
+          <p-select
+            id="whydidnotreceivcare"
+            [(ngModel)]="newFollowingForm.whydidnotreceivcare"
+            [options]="noCareReasons"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+      </ng-container>
     </div>
 
     <!-- Message d'aide -->
@@ -1315,13 +1907,460 @@
         severity="secondary"
         [outlined]="true"
         (onClick)="closeNewFollowingModal()"
+        [disabled]="savingFollowing"
       />
       <p-button
         label="Enregistrer"
         icon="pi pi-check"
         (onClick)="saveNewFollowing()"
-        [disabled]="!isNewFollowingFormValid()"
+        [disabled]="!isNewFollowingFormValid() || savingFollowing"
+        [loading]="savingFollowing"
       />
     </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Nouvelle évaluation de sensibilisation -->
+<p-dialog
+  header="Nouvelle évaluation de sensibilisation"
+  [(visible)]="showNewAwarenessModal"
+  [modal]="true"
+  [style]="{ width: '800px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeNewAwarenessModal()"
+>
+  <div class="space-y-6">
+    <!-- Info -->
+    <div class="p-4 bg-blue-50 rounded-lg">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-info-circle text-blue-500 text-xl"></i>
+        <p class="text-sm text-blue-900">
+          Évaluez les connaissances du patient sur l'hypertension et le diabète
+        </p>
+      </div>
+    </div>
+
+    <!-- Date d'enregistrement -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2" for="registrationDate">
+        Date d'évaluation
+      </label>
+      <p-datepicker
+        id="registrationDate"
+        [(ngModel)]="newAwarenessForm.registrationDate"
+        [showIcon]="true"
+        dateFormat="dd/mm/yy"
+        styleClass="w-full"
+        placeholder="Sélectionnez la date"
+      />
+    </div>
+
+    <!-- Section Hypertension -->
+    <div class="border border-red-200 rounded-lg p-4 bg-red-50">
+      <h4 class="font-semibold text-red-800 mb-4 flex items-center gap-2">
+        <i class="pi pi-heart"></i>
+        Connaissances sur l'Hypertension
+      </h4>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="htaKnowledge">
+            Le patient sait-il ce qu'est l'hypertension ? <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="htaKnowledge"
+            [(ngModel)]="newAwarenessForm.hypertension_knowledge"
+            [options]="hypertensionKnowledgeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez une réponse"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="htaSymptoms">
+            Le patient peut-il citer des symptômes ? <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="htaSymptoms"
+            [(ngModel)]="newAwarenessForm.hypertension_symptoms"
+            [options]="hypertensionSymptomsOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez une réponse"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="htaAction">
+            Le patient sait-il quoi faire en cas d'hypertension ? <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="htaAction"
+            [(ngModel)]="newAwarenessForm.hypertension_action"
+            [options]="actionKnowledgeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez une réponse"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Diabète -->
+    <div class="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
+      <h4 class="font-semibold text-yellow-800 mb-4 flex items-center gap-2">
+        <i class="pi pi-sun"></i>
+        Connaissances sur le Diabète
+      </h4>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="diabetesKnowledge">
+            Le patient sait-il ce qu'est le diabète ? <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="diabetesKnowledge"
+            [(ngModel)]="newAwarenessForm.diabetes_knowledge"
+            [options]="diabetesKnowledgeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez une réponse"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="diabetesSigns">
+            Le patient connaît-il les signes du diabète ? <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="diabetesSigns"
+            [(ngModel)]="newAwarenessForm.diabetes_signs"
+            [options]="diabetesSignsOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez une réponse"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="diabetesAction">
+            Le patient sait-il quoi faire en cas de diabète ? <span class="text-red-500">*</span>
+          </label>
+          <p-select
+            id="diabetesAction"
+            [(ngModel)]="newAwarenessForm.diabetes_action"
+            [options]="actionKnowledgeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionnez une réponse"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Message d'aide -->
+    <div class="text-sm text-gray-500 flex items-start gap-2">
+      <i class="pi pi-info-circle mt-0.5"></i>
+      <span>Tous les champs sont obligatoires pour valider l'évaluation.</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        label="Annuler"
+        icon="pi pi-times"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeNewAwarenessModal()"
+        [disabled]="savingAwareness"
+      />
+      <p-button
+        label="Enregistrer"
+        icon="pi pi-check"
+        (onClick)="saveNewAwareness()"
+        [disabled]="!isNewAwarenessFormValid() || savingAwareness"
+        [loading]="savingAwareness"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ==================== SCREENING DETAIL MODALS ==================== -->
+
+<!-- Modal: Détails Prédépistage (PreScreening) -->
+<p-dialog
+  header="Détails du prédépistage"
+  [(visible)]="showPreScreeningModal"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closePreScreeningModal()"
+>
+  <div *ngIf="selectedPreScreening" class="space-y-6">
+    <!-- Patient Info -->
+    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
+        [ngClass]="{
+          'bg-blue-100 text-blue-700': selectedPreScreening.patientSex === 'M',
+          'bg-pink-100 text-pink-700': selectedPreScreening.patientSex === 'F'
+        }"
+      >
+        {{ getPatientInitials(selectedPreScreening.patientName) }}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-gray-900">{{ selectedPreScreening.patientName }}</h3>
+        <p class="text-gray-500">{{ selectedPreScreening.patientAge }} ans • {{ selectedPreScreening.patientSex === 'M' ? 'Homme' : 'Femme' }}</p>
+      </div>
+      <p-tag
+        [value]="selectedPreScreening.riskLevelLabel + ' (' + (selectedPreScreening.riskLevel || 0) + ')'"
+        [severity]="getRiskLevelSeverityLabel(selectedPreScreening.riskLevel)"
+        styleClass="text-sm"
+      />
+    </div>
+
+    <!-- Test Info -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="p-4 bg-purple-50 rounded-lg">
+        <p class="text-sm text-purple-600 font-medium">Maladie ciblée</p>
+        <p class="text-lg font-semibold text-purple-900">{{ selectedPreScreening.disease }}</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-600 font-medium">Date du questionnaire</p>
+        <p class="text-lg font-semibold text-gray-900">{{ selectedPreScreening.createdAt | date:'short' }}</p>
+      </div>
+    </div>
+
+    <!-- Risk Factors -->
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Facteurs de risque évalués</h4>
+      <div class="grid grid-cols-2 gap-2">
+        <div
+          *ngFor="let factor of parsePreScreeningAnswers(selectedPreScreening.answers)"
+          class="p-2 rounded-lg border text-sm"
+          [ngClass]="factor.value ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'"
+        >
+          <div class="flex items-center justify-between">
+            <span [ngClass]="factor.value ? 'text-red-800' : 'text-green-800'">{{ factor.label }}</span>
+            <i
+              class="pi text-xs"
+              [ngClass]="factor.value ? 'pi-times text-red-600' : 'pi-check text-green-600'"
+            ></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>{{ selectedPreScreening.workerName }}</strong></span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closePreScreeningModal()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Détails Dépistage HTA -->
+<p-dialog
+  header="Détails du dépistage HTA"
+  [(visible)]="showHTAModal"
+  [modal]="true"
+  [style]="{ width: '650px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeHTAModal()"
+>
+  <div *ngIf="selectedScreeningHTA" class="space-y-6">
+    <!-- Patient Info + Result -->
+    <div class="flex items-center gap-4 p-4 rounded-lg" [ngClass]="selectedScreeningHTA.flag === 0 ? 'bg-green-50' : 'bg-red-50'">
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
+        [ngClass]="{
+          'bg-blue-100 text-blue-700': getMemberFullName().includes('Homme') || member?.gender === 'M' || member?.gender === 'Male',
+          'bg-pink-100 text-pink-700': getMemberFullName().includes('Femme') || member?.gender === 'F' || member?.gender === 'Female'
+        }"
+      >
+        {{ getPatientInitials(getMemberFullName()) }}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-gray-900">{{ getMemberFullName() }}</h3>
+        <p class="text-gray-500">{{ getAge() }} ans • {{ member?.gender === 'M' || member?.gender === 'Male' ? 'Homme' : 'Femme' }}</p>
+      </div>
+      <div class="text-right">
+        <p class="text-3xl font-bold" [ngClass]="selectedScreeningHTA.flag === 0 ? 'text-green-700' : 'text-red-700'">
+          {{ selectedScreeningHTA.sys_avarage }}/{{ selectedScreeningHTA.dias_avarage }}
+        </p>
+        <p class="text-sm text-gray-600">mmHg</p>
+      </div>
+    </div>
+
+    <!-- Grade -->
+    <div class="flex justify-center">
+      <p-tag
+        [value]="selectedScreeningHTA.grade || (selectedScreeningHTA.flag === 0 ? 'Normal' : 'Élevé')"
+        [severity]="getHTASeverity(selectedScreeningHTA.flag)"
+        styleClass="text-lg px-4 py-2"
+      />
+    </div>
+
+    <!-- Measurements -->
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Mesures détaillées</h4>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-600 font-medium">Bras droit</p>
+          <p class="text-lg font-semibold text-blue-900">{{ selectedScreeningHTA.armrightsystol }}/{{ selectedScreeningHTA.armrightdiastol }} mmHg</p>
+        </div>
+        <div class="p-4 bg-green-50 rounded-lg">
+          <p class="text-sm text-green-600 font-medium">Bras gauche</p>
+          <p class="text-lg font-semibold text-green-900">{{ selectedScreeningHTA.armleftsystol }}/{{ selectedScreeningHTA.armleftdiastol }} mmHg</p>
+        </div>
+        <div class="p-4 bg-purple-50 rounded-lg">
+          <p class="text-sm text-purple-600 font-medium">Moyenne systolique</p>
+          <p class="text-lg font-semibold text-purple-900">{{ selectedScreeningHTA.sys_avarage }} mmHg</p>
+        </div>
+        <div class="p-4 bg-orange-50 rounded-lg">
+          <p class="text-sm text-orange-600 font-medium">Moyenne diastolique</p>
+          <p class="text-lg font-semibold text-orange-900">{{ selectedScreeningHTA.dias_avarage }} mmHg</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="p-4 bg-amber-50 rounded-lg">
+        <p class="text-sm text-amber-600 font-medium">Antécédents</p>
+        <p class="text-lg font-semibold text-amber-900">{{ selectedScreeningHTA.didhavethedisease === 'Oui' ? 'Oui' : 'Non' }}</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-600 font-medium">Date du dépistage</p>
+        <p class="text-lg font-semibold text-gray-900">{{ selectedScreeningHTA.createdat | date:'short' }}</p>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>Agent de santé</strong></span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeHTAModal()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Détails Dépistage Diabète -->
+<p-dialog
+  header="Détails du dépistage Diabète"
+  [(visible)]="showDiabeteModal"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeDiabeteModal()"
+>
+  <div *ngIf="selectedScreeningDiabete" class="space-y-6">
+    <!-- Patient Info + Result -->
+    <div class="flex items-center gap-4 p-4 rounded-lg" [ngClass]="selectedScreeningDiabete.flag === 0 ? 'bg-green-50' : 'bg-red-50'">
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
+        [ngClass]="{
+          'bg-blue-100 text-blue-700': getMemberFullName().includes('Homme') || member?.gender === 'M' || member?.gender === 'Male',
+          'bg-pink-100 text-pink-700': getMemberFullName().includes('Femme') || member?.gender === 'F' || member?.gender === 'Female'
+        }"
+      >
+        {{ getPatientInitials(getMemberFullName()) }}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-gray-900">{{ getMemberFullName() }}</h3>
+        <p class="text-gray-500">{{ getAge() }} ans • {{ member?.gender === 'M' || member?.gender === 'Male' ? 'Homme' : 'Femme' }}</p>
+      </div>
+      <div class="text-right">
+        <p class="text-3xl font-bold" [ngClass]="selectedScreeningDiabete.flag === 0 ? 'text-green-700' : 'text-red-700'">
+          {{ selectedScreeningDiabete.glucose_level }}
+        </p>
+        <p class="text-sm text-gray-600">g/L</p>
+      </div>
+    </div>
+
+    <!-- Grade -->
+    <div class="flex justify-center">
+      <p-tag
+        [value]="selectedScreeningDiabete.grade || (selectedScreeningDiabete.flag === 0 ? 'Normal' : 'Élevé')"
+        [severity]="getDiabeteSeverity(selectedScreeningDiabete.flag)"
+        styleClass="text-lg px-4 py-2"
+      />
+    </div>
+
+    <!-- Test Conditions -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="p-4 bg-blue-50 rounded-lg text-center">
+        <p class="text-sm text-blue-600 font-medium">Glycémie</p>
+        <p class="text-lg font-semibold text-blue-900">{{ selectedScreeningDiabete.glucose_level }} g/L</p>
+      </div>
+      <div class="p-4 bg-amber-50 rounded-lg text-center">
+        <p class="text-sm text-amber-600 font-medium">À jeun</p>
+        <p class="text-lg font-semibold text-amber-900">{{ selectedScreeningDiabete.eatornot === 'Non' ? 'Oui' : 'Non' }}</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-lg text-center">
+        <p class="text-sm text-gray-600 font-medium">Date du test</p>
+        <p class="text-lg font-semibold text-gray-900">{{ selectedScreeningDiabete.createdat | date:'shortDate' }}</p>
+      </div>
+    </div>
+
+    <!-- Reference values -->
+    <div class="p-4 bg-gray-100 rounded-lg">
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">Valeurs de référence (à jeun)</h4>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between items-center">
+          <span>Normal:</span>
+          <span class="font-medium text-green-700">&lt; 1.10 g/L</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>Intolérance au glucose:</span>
+          <span class="font-medium text-yellow-700">1.10 - 1.25 g/L</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>Diabète:</span>
+          <span class="font-medium text-red-700">≥ 1.26 g/L</span>
+        </div>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>Agent de santé</strong></span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeDiabeteModal()" />
   </ng-template>
 </p-dialog>

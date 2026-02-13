@@ -14,8 +14,13 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AvatarModule } from 'primeng/avatar';
 import { DividerModule } from 'primeng/divider';
 import { BadgeModule } from 'primeng/badge';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { ToastModule } from 'primeng/toast';
 
-import { UserDisplay, USER_STATUS_OPTIONS, USER_ROLE_OPTIONS } from '@core/models/user';
+import { UserDisplay, USER_STATUS_OPTIONS, USER_ROLE_OPTIONS, Role } from '@core/models/user';
+import { DirectusService } from '@core/services/directus.service';
+import { readUsers, updateUser } from '@directus/sdk';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-workers',
@@ -34,10 +39,13 @@ import { UserDisplay, USER_STATUS_OPTIONS, USER_ROLE_OPTIONS } from '@core/model
     AvatarModule,
     DividerModule,
     BadgeModule,
+    ToggleSwitchModule,
+    ToastModule,
   ],
   templateUrl: './workers.component.html',
   styleUrl: './workers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [MessageService],
 })
 export class WorkersComponent implements OnInit {
   // Data
@@ -62,192 +70,111 @@ export class WorkersComponent implements OnInit {
   showUserModal = false;
   selectedUser: UserDisplay | null = null;
 
+  constructor(
+    private readonly directusService: DirectusService,
+    private readonly messageService: MessageService
+  ) {}
+
   ngOnInit(): void {
     this.loadUsers();
   }
 
-  loadUsers(): void {
+  async loadUsers(): Promise<void> {
     this.loading.set(true);
+    try {
+      const rawUsers = await this.directusService.directus.request(
+        readUsers({
+          fields: [
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'status',
+            'role',
+            'role.name',
+            'role.code',
+            'title',
+            'phone_number',
+            'region',
+            'district',
+            'community',
+            'health_center',
+            'last_access',
+            'created_at',
+            'supervisor_id.id',
+            'supervisor_id.first_name',
+            'supervisor_id.last_name',
+          ],
+          sort: ['first_name', 'last_name'],
+          filter: {
+            role: {
+              code: {
+                _neq: 'ADMIN'
+              }
+            }
+          }
+        })
+      );
 
-    // Test data
-    const usersData: UserDisplay[] = [
-      {
-        id: 'u-001',
-        first_name: 'Fatou',
-        last_name: 'Sow',
-        email: 'fatou.sow@moh.sn',
-        phone_number: '+221 77 123 45 67',
-        title: 'Agent Communautaire de Santé',
-        status: 'active',
-        role: 'acs',
-        roleLabel: 'Agent Communautaire (ACS)',
-        region: 'Dakar',
-        district: 'Pikine',
-        community: 'Thiaroye',
-        health_center: 'Centre de Santé Thiaroye',
-        supervisorName: 'Dr. Mamadou Ba',
-        last_access: new Date('2026-01-24T08:30:00'),
-        householdsCount: 45,
-        patientsCount: 187,
-        screeningsCount: 156,
-        created_at: new Date('2024-06-15'),
-      },
-      {
-        id: 'u-002',
-        first_name: 'Ibrahima',
-        last_name: 'Ndiaye',
-        email: 'ibrahima.ndiaye@moh.sn',
-        phone_number: '+221 76 234 56 78',
-        title: 'Agent Communautaire de Santé',
-        status: 'active',
-        role: 'acs',
-        roleLabel: 'Agent Communautaire (ACS)',
-        region: 'Dakar',
-        district: 'Guédiawaye',
-        community: 'Golf Sud',
-        health_center: 'Centre de Santé Golf Sud',
-        supervisorName: 'Dr. Mamadou Ba',
-        last_access: new Date('2026-01-23T16:45:00'),
-        householdsCount: 38,
-        patientsCount: 142,
-        screeningsCount: 128,
-        created_at: new Date('2024-07-20'),
-      },
-      {
-        id: 'u-003',
-        first_name: 'Moussa',
-        last_name: 'Diop',
-        email: 'moussa.diop@moh.sn',
-        phone_number: '+221 78 345 67 89',
-        title: 'Agent Communautaire de Santé',
-        status: 'active',
-        role: 'acs',
-        roleLabel: 'Agent Communautaire (ACS)',
-        region: 'Thiès',
-        district: 'Thiès',
-        community: 'Mbour',
-        health_center: 'Centre de Santé Mbour',
-        supervisorName: 'Dr. Aïssatou Diallo',
-        last_access: new Date('2026-01-24T10:15:00'),
-        householdsCount: 52,
-        patientsCount: 203,
-        screeningsCount: 189,
-        created_at: new Date('2024-05-10'),
-      },
-      {
-        id: 'u-004',
-        first_name: 'Mamadou',
-        last_name: 'Ba',
-        email: 'mamadou.ba@moh.sn',
-        phone_number: '+221 77 456 78 90',
-        title: 'Médecin Chef de District',
-        status: 'active',
-        role: 'medecin',
-        roleLabel: 'Médecin',
-        region: 'Dakar',
-        district: 'Pikine',
-        community: '',
-        health_center: 'District Sanitaire de Pikine',
-        supervisorName: '',
-        last_access: new Date('2026-01-24T09:00:00'),
-        householdsCount: 0,
-        patientsCount: 0,
-        screeningsCount: 0,
-        created_at: new Date('2024-01-05'),
-      },
-      {
-        id: 'u-005',
-        first_name: 'Aïssatou',
-        last_name: 'Diallo',
-        email: 'aissatou.diallo@moh.sn',
-        phone_number: '+221 76 567 89 01',
-        title: 'Infirmière Chef de Poste',
-        status: 'active',
-        role: 'infirmier',
-        roleLabel: 'Infirmier',
-        region: 'Thiès',
-        district: 'Thiès',
-        community: '',
-        health_center: 'Poste de Santé Mbour Nord',
-        supervisorName: 'Dr. Oumar Sy',
-        last_access: new Date('2026-01-22T14:30:00'),
-        householdsCount: 0,
-        patientsCount: 0,
-        screeningsCount: 0,
-        created_at: new Date('2024-02-18'),
-      },
-      {
-        id: 'u-006',
-        first_name: 'Oumar',
-        last_name: 'Sy',
-        email: 'oumar.sy@moh.sn',
-        phone_number: '+221 78 678 90 12',
-        title: 'Superviseur Régional',
-        status: 'active',
-        role: 'supervisor',
-        roleLabel: 'Superviseur',
-        region: 'Thiès',
-        district: '',
-        community: '',
-        health_center: 'Région Médicale de Thiès',
-        supervisorName: '',
-        last_access: new Date('2026-01-24T07:45:00'),
-        householdsCount: 0,
-        patientsCount: 0,
-        screeningsCount: 0,
-        created_at: new Date('2023-11-20'),
-      },
-      {
-        id: 'u-007',
-        first_name: 'Khady',
-        last_name: 'Mbaye',
-        email: 'khady.mbaye@moh.sn',
-        phone_number: '+221 77 789 01 23',
-        title: 'Agent Communautaire de Santé',
-        status: 'suspended',
-        role: 'acs',
-        roleLabel: 'Agent Communautaire (ACS)',
-        region: 'Saint-Louis',
-        district: 'Saint-Louis',
-        community: 'Sor',
-        health_center: 'Centre de Santé Sor',
-        supervisorName: 'Dr. Abdoulaye Fall',
-        last_access: new Date('2026-01-10T11:20:00'),
-        householdsCount: 28,
-        patientsCount: 95,
-        screeningsCount: 72,
-        created_at: new Date('2024-08-05'),
-      },
-      {
-        id: 'u-008',
-        first_name: 'Admin',
-        last_name: 'System',
-        email: 'admin@moh.sn',
-        phone_number: '+221 33 800 00 00',
-        title: 'Administrateur Système',
-        status: 'active',
-        role: 'admin',
-        roleLabel: 'Administrateur',
-        region: '',
-        district: '',
-        community: '',
-        health_center: 'Ministère de la Santé',
-        supervisorName: '',
-        last_access: new Date('2026-01-24T11:00:00'),
-        householdsCount: 0,
-        patientsCount: 0,
-        screeningsCount: 0,
-        created_at: new Date('2023-01-01'),
-      },
-    ];
+      const usersData: UserDisplay[] = (rawUsers as any[]).map((u) => this.mapUser(u));
 
-    // Extract unique regions
-    const regions = [...new Set(usersData.map((u) => u.region).filter(Boolean))];
-    this.regionOptions = regions.map((r) => ({ label: r!, value: r! }));
+      const regions = [...new Set(usersData.map((u) => u.region).filter(Boolean))];
+      this.regionOptions = regions.map((r) => ({ label: r!, value: r! }));
 
-    this.users.set(usersData);
-    this.filteredUsers.set(usersData);
-    this.loading.set(false);
+      this.users.set(usersData);
+      this.filteredUsers.set(usersData);
+    } catch (error) {
+      console.error('Erreur lors du chargement des utilisateurs:', error);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  private normalizeRole(role: string | Role | undefined): 'admin' | 'supervisor' | 'medecin' | 'infirmier' | 'acs' | 'guest' {
+    if (!role) return 'guest';
+    if (typeof role === 'string') {
+      const r = role.toLowerCase();
+      if (['admin', 'supervisor', 'medecin', 'infirmier', 'acs'].includes(r)) return r as any;
+      return 'guest';
+    }
+    const name = role.name?.toLowerCase() || '';
+    if (name.includes('admin')) return 'admin';
+    if (name.includes('super')) return 'supervisor';
+    if (name.includes('medec') || name.includes('doctor') || name.includes('médec')) return 'medecin';
+    if (name.includes('infirm')) return 'infirmier';
+    if (name.includes('acs') || name.includes('agent')) return 'acs';
+    return 'guest';
+  }
+
+  private mapUser(raw: any): UserDisplay {
+    const normalizedRole = this.normalizeRole(raw.role);
+    const roleLabel = this.roleOptions.find((o) => o.value === normalizedRole)?.label || (typeof raw.role === 'object' ? raw.role?.name : normalizedRole);
+    const supervisorName = raw?.supervisor_id ? [raw.supervisor_id.first_name, raw.supervisor_id.last_name].filter(Boolean).join(' ') : '';
+
+    const fullName = [raw.first_name, raw.last_name].filter(Boolean).join(' ');
+
+    return {
+      id: raw.id,
+      first_name: raw.first_name,
+      last_name: raw.last_name,
+      email: raw.email,
+      phone_number: raw.phone_number,
+      title: raw.title,
+      status: raw.status,
+      role: normalizedRole,
+      roleLabel,
+      region: raw.region,
+      district: raw.district,
+      community: raw.community,
+      health_center: raw.health_center,
+      supervisorName,
+      last_access: raw.last_access,
+      created_at: raw.created_at,
+      fullName,
+      householdsCount: 0,
+      patientsCount: 0,
+      screeningsCount: 0,
+    };
   }
 
   applyFilters(): void {
@@ -308,19 +235,19 @@ export class WorkersComponent implements OnInit {
   }
 
   editUser(user: UserDisplay): void {
-    console.log('Edit user:', user);
-    // TODO: Navigate to edit page or open edit modal
+    // Ouvrir le modal de profil pour édition
+    this.viewUser(user);
   }
 
   callUser(user: UserDisplay): void {
     if (user.phone_number) {
-      window.location.href = `tel:${user.phone_number}`;
+      globalThis.location.href = `tel:${user.phone_number}`;
     }
   }
 
   emailUser(user: UserDisplay): void {
     if (user.email) {
-      window.location.href = `mailto:${user.email}`;
+      globalThis.location.href = `mailto:${user.email}`;
     }
   }
 
@@ -423,5 +350,56 @@ export class WorkersComponent implements OnInit {
 
   getMedicalStaffCount(): number {
     return this.users().filter((u) => u.role === 'medecin' || u.role === 'infirmier').length;
+  }
+
+  async toggleUserStatus(user: UserDisplay): Promise<void> {
+    // Only proceed if the toggle is being turned on (activating the user)
+    // if (!isChecked) {
+    //   return;
+    // }
+
+    // if (user.status !== 'invited') {
+    //   this.messageService.add({
+    //     severity: 'warn',
+    //     summary: 'Action non autorisée',
+    //     detail: 'Seuls les utilisateurs non vérifiés peuvent être activés'
+    //   });
+    //   return;
+    // }
+
+    try {
+      await this.directusService.directus.request(
+        updateUser(user.id, {
+          status: user.status === 'active' ? 'unverified' : 'active'
+        })
+      );
+
+      // Update local state
+      const users = this.users();
+      const userIndex = users.findIndex(u => u.id === user.id);
+      if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], status: user.status === 'active' ? 'unverified' : 'active' };
+        this.users.set([...users]);
+        this.applyFilters();
+      }
+
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Statut mis à jour',
+        detail: `Le statut de l'utilisateur ${this.getFullName(user)} a été mis à jour avec succès`
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Erreur lors de la mise à jour du statut de l\'utilisateur'
+      });
+    }
+  }
+
+  canToggleStatus(user: UserDisplay): boolean {
+    return user.status === 'invited';
   }
 }

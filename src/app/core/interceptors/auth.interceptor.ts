@@ -20,6 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // Cloner la requête et ajouter le token si disponible et nécessaire
   let authReq = req;
   if (token && !isPublicUrl) {
+    console.log('Ajout du token à la requête:', req.url);
     authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,

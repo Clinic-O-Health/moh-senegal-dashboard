@@ -3,9 +3,11 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
 import { MenuModule } from 'primeng/menu';
+import { PopoverModule } from 'primeng/popover';
+
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, ButtonModule, AvatarModule, MenuModule],
+  imports: [CommonModule, ButtonModule, AvatarModule, MenuModule, PopoverModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

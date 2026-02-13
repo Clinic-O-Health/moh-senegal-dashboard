@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +9,9 @@ import { TagModule } from 'primeng/tag';
 import { Select } from 'primeng/select';
 import { CardModule } from 'primeng/card';
 import { TooltipModule } from 'primeng/tooltip';
-import { Household } from '@core/models/household';
+import { Household, HouseholdMember } from '@core/models/household';
+import { DirectusService } from '@core/services/directus.service';
+import { readItems } from '@directus/sdk';
 @Component({
   selector: 'app-households',
   imports: [
@@ -30,6 +32,8 @@ import { Household } from '@core/models/household';
 export class HouseholdsComponent implements OnInit {
   constructor(
     private readonly router: Router,
+    private readonly directusService: DirectusService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
   loading = false;
   searchTerm = '';
@@ -47,69 +51,80 @@ export class HouseholdsComponent implements OnInit {
     this.loadHouseholds();
   }
 
-  loadHouseholds() {
+  async loadHouseholds() {
     this.loading = true;
-    // Simuler des données basées sur le modèle Directus
-    setTimeout(() => {
-      this.households = [
-        {
-          id: '1',
-          headOfHouseHoldContact: '+221 77 123 45 67',
-          location: 'Touba Toulé',
-          commune: 'Khombole',
-          district: 'Thiès',
-          typeOfWater: 'Robinet',
-          typeLatrine: 'WC moderne',
-          dailyExpenditure: '5000-10000 FCFA',
-          hasGarbageCollectionService: true,
-          timeToNearestHealthCenterMinutes: '15',
-          lastDoctorVisitDate: new Date('2025-12-15'),
-          doctorVisitsLast12Months: '3',
-          totalMembers: 6,
-          membersScreened: 4,
-          membersAtRisk: 2,
-          workerName: 'Fatou Dieng',
-        },
-        {
-          id: '2',
-          headOfHouseHoldContact: '+221 77 234 56 78',
-          location: 'Thilla Ounté',
-          commune: 'Khombole',
-          district: 'Thiès',
-          typeOfWater: 'Puits',
-          typeLatrine: 'Latrine traditionnelle',
-          dailyExpenditure: '2000-5000 FCFA',
-          hasGarbageCollectionService: false,
-          timeToNearestHealthCenterMinutes: '30',
-          lastDoctorVisitDate: new Date('2025-10-20'),
-          doctorVisitsLast12Months: '1',
-          totalMembers: 8,
-          membersScreened: 8,
-          membersAtRisk: 0,
-          workerName: 'Ibou Seck',
-        },
-        {
-          id: '3',
-          headOfHouseHoldContact: '+221 77 345 67 89',
-          location: 'Refane Souf',
-          commune: 'Khombole',
-          district: 'Thiès',
-          typeOfWater: 'Borne fontaine',
-          typeLatrine: 'WC moderne',
-          dailyExpenditure: '10000-15000 FCFA',
-          hasGarbageCollectionService: true,
-          timeToNearestHealthCenterMinutes: '10',
-          lastDoctorVisitDate: new Date('2026-01-05'),
-          doctorVisitsLast12Months: '5',
-          totalMembers: 5,
-          membersScreened: 2,
-          membersAtRisk: 1,
-          workerName: 'Aminata Fall',
-        },
-      ];
+
+    try {
+      // Charger les ménages depuis Directus
+      const householdsData = await this.directusService.directus.request(
+        readItems('household', {
+          fields: ['*'],
+          limit: -1
+        })
+      ) as Household[];
+
+      // Pour chaque ménage, charger les statistiques des membres
+      const householdsWithStats = await Promise.all(
+        householdsData.map(async (household) => {
+          try {
+            // Charger les membres du ménage
+            const members = await this.directusService.directus.request(
+              readItems('householdmember', {
+                filter: { householdid: { _eq: household.id } },
+                fields: [
+                  'id',
+                  'filledScreeningForm',
+                  'workerId.id',
+                  'workerId.first_name',
+                  'workerId.last_name'
+                ]
+              })
+            ) as HouseholdMember[];
+
+            const totalMembers = members.length;
+            const membersScreened = members.filter(m => m.filledScreeningForm).length;
+
+            // Récupérer le nom de l'ACS du premier membre qui en a un
+            let workerName = '';
+            for (const member of members) {
+              if (member.workerId && typeof member.workerId === 'object') {
+                const worker = member.workerId;
+                const name = [worker.first_name, worker.last_name].filter(Boolean).join(' ');
+                if (name) {
+                  workerName = name;
+                  break;
+                }
+              }
+            }
+
+            return {
+              ...household,
+              totalMembers,
+              membersScreened,
+              membersAtRisk: 0, // On calculerait depuis les screenings si nécessaire
+              workerName
+            };
+          } catch (error) {
+            console.error(`Erreur pour le ménage ${household.id}:`, error);
+            return {
+              ...household,
+              totalMembers: 0,
+              membersScreened: 0,
+              membersAtRisk: 0
+            };
+          }
+        })
+      );
+
+      this.households = householdsWithStats;
       this.filteredHouseholds = [...this.households];
+      console.log('Ménages chargés:', this.households);
+    } catch (error) {
+      console.error('Erreur lors du chargement des ménages:', error);
+    } finally {
       this.loading = false;
-    }, 800);
+      this.cdr.detectChanges(); // Forcer la détection de changements
+    }
   }
 
   onSearch() {

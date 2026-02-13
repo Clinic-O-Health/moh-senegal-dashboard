@@ -134,7 +134,7 @@
     [rowsPerPageOptions]="[5, 10, 20, 50]"
     [loading]="loading"
     styleClass="p-datatable-sm"
-    [globalFilterFields]="['lastName', 'firstName', 'phoneNumber', 'assignedWorkerName']"
+    [globalFilterFields]="['lastname', 'firstname', 'phoneNumber', 'assignedWorkerName']"
     [rowHover]="true"
   >
     <ng-template pTemplate="header">
@@ -158,18 +158,18 @@
             <div
               class="w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0"
               [ngClass]="{
-                'bg-blue-100 text-blue-700': patient.sex === 'M',
-                'bg-pink-100 text-pink-700': patient.sex === 'F'
+                'bg-blue-100 text-blue-700': getPatientGender(patient) === 'M',
+                'bg-pink-100 text-pink-700': getPatientGender(patient) === 'F'
               }"
             >
               {{ getPatientInitials(patient) }}
             </div>
             <div class="min-w-0">
               <p class="font-semibold text-gray-900 truncate">
-                {{ patient.firstName }} {{ patient.lastName }}
+                {{ patient.firstname }} {{ patient.lastname }}
               </p>
               <p class="text-sm text-gray-500 truncate md:hidden">
-                {{ patient.age }} ans, {{ patient.sex }}
+                {{ patient.age }} ans, {{ getPatientGender(patient) }}
               </p>
             </div>
           </div>
@@ -178,7 +178,7 @@
         <!-- Âge/Sexe -->
         <td class="px-4 py-3 hidden md:table-cell">
           <p class="text-gray-900">{{ patient.age }} ans</p>
-          <p class="text-sm text-gray-500">{{ patient.sex === 'M' ? 'Homme' : 'Femme' }}</p>
+          <p class="text-sm text-gray-500">{{ getGenderLabel(patient) }}</p>
         </td>
 
         <!-- Téléphone -->
@@ -254,7 +254,7 @@
               tooltipPosition="left"
               (onClick)="viewPatient(patient)"
             />
-            <p-button
+            <!-- <p-button
               icon="pi pi-pencil"
               [text]="true"
               [rounded]="true"
@@ -262,7 +262,7 @@
               pTooltip="Modifier"
               tooltipPosition="left"
               (onClick)="editPatient(patient)"
-            />
+            /> -->
             <p-button
               icon="pi pi-phone"
               [text]="true"

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
@@ -9,6 +9,8 @@ import { Select } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { HouseholdMember } from '@core/models/household';
+import { DirectusService } from '../../../core/services/directus.service';
+import { readItems } from '@directus/sdk';
 
 interface FilterOption {
   label: string;
@@ -56,121 +58,94 @@ export class PatientsListComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly directusService: DirectusService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadPatients();
   }
 
-  loadPatients() {
+  async loadPatients() {
     this.loading = true;
 
-    // Simuler un appel API avec des données de test
-    setTimeout(() => {
-      this.patients = [
-        {
-          id: '1',
-          firstName: 'Moussa',
-          lastName: 'Sall',
-          age: 58,
-          sex: 'M',
-          phoneNumber: '+221 77 123 45 67',
-          assignedWorkerName: 'Fatou Dieng',
-          lastVisitDate: new Date('2026-01-08'),
-          htaClassification: 'elevee',
-          diabetesClassification: 'elevee',
-          followUpStatus: 'risque',
-          lastBloodPressure: '145/92',
-          lastGlycemia: 1.35,
-          filledScreeningForm: true,
-          filledAwarenessForm: true,
-          householdid: 'h-001'
-        },
-        {
-          id: '2',
-          firstName: 'Awa',
-          lastName: 'Ndiaye',
-          age: 52,
-          sex: 'F',
-          phoneNumber: '+221 77 234 56 78',
-          assignedWorkerName: 'Fatou Dieng',
-          lastVisitDate: new Date('2026-01-10'),
-          htaClassification: 'elevee',
-          followUpStatus: 'urgent',
-          lastBloodPressure: '185/105',
-          filledScreeningForm: true,
-          filledAwarenessForm: true,
-          householdid: 'h-002'
-        },
-        {
-          id: '3',
-          firstName: 'Khady',
-          lastName: 'Ba',
-          age: 45,
-          sex: 'F',
-          phoneNumber: '+221 77 345 67 89',
-          assignedWorkerName: 'Ibou Seck',
-          lastVisitDate: new Date('2026-01-09'),
-          htaClassification: 'normale',
-          diabetesClassification: 'normale',
-          followUpStatus: 'stable',
-          filledScreeningForm: true,
-          filledAwarenessForm: true,
-          householdid: 'h-003'
-        },
-        {
-          id: '4',
-          firstName: 'Oumar',
-          lastName: 'Diop',
-          age: 62,
-          sex: 'M',
-          phoneNumber: '+221 77 456 78 90',
-          assignedWorkerName: 'Aminata Fall',
-          lastVisitDate: new Date('2026-01-07'),
-          htaClassification: 'elevee',
-          diabetesClassification: 'normale',
-          followUpStatus: 'actif',
-          lastBloodPressure: '142/88',
-          filledScreeningForm: true,
-          filledAwarenessForm: false,
-          householdid: 'h-001'
-        },
-        {
-          id: '5',
-          firstName: 'Aissatou',
-          lastName: 'Faye',
-          age: 39,
-          sex: 'F',
-          phoneNumber: '+221 77 567 89 01',
-          assignedWorkerName: 'Fatou Dieng',
-          lastVisitDate: new Date('2026-01-11'),
-          diabetesClassification: 'elevee',
-          followUpStatus: 'actif',
-          lastGlycemia: 1.45,
-          filledScreeningForm: true,
-          filledAwarenessForm: true,
-          householdid: 'h-004'
-        },
-        {
-          id: '6',
-          firstName: 'Ibrahima',
-          lastName: 'Gueye',
-          age: 35,
-          sex: 'M',
-          phoneNumber: '+221 77 678 90 12',
-          assignedWorkerName: 'Ibou Seck',
-          lastVisitDate: new Date('2026-01-05'),
-          followUpStatus: 'stable',
-          filledScreeningForm: false,
-          filledAwarenessForm: true,
-          householdid: 'h-005'
-        }
-      ];
+    try {
+      // Le SDK utilise automatiquement le token via le storage personnalisé
+      const patients = await this.directusService.directus.request(
+        readItems('householdmember', {
+          // filter: { filledScreeningForm: { _eq: true } },
+          fields: ['*', 'householdid.*', 'workerId.id', 'workerId.first_name', 'workerId.last_name', 'workerId.phone_number']
+        })
+      ) as HouseholdMember[];
 
-      this.filteredPatients = [...this.patients];
-      this.loading = false;
-    }, 800);
+      console.log('Patients chargés:', patients);
+
+      // Si des données sont retournées, les mapper et les utiliser
+      if (patients && patients.length > 0) {
+        this.patients = patients.map(p => this.mapPatient(p));
+        this.filteredPatients = [...this.patients];
+        this.loading = false;
+        this.cdr.detectChanges(); // Forcer la détection de changements
+        console.log('Patients après mapping:', this.patients);
+        return;
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des patients:', error);
+    }
+
+    this.loading = false;
+    this.cdr.detectChanges(); // Forcer la détection de changements
+  }
+
+  /**
+   * Mappe les données brutes de Directus vers le format attendu par le template
+   */
+  mapPatient(raw: HouseholdMember): HouseholdMember {
+    // Calculer l'âge depuis dateofbirth
+    let age: number | undefined;
+    if (raw.dateofbirth) {
+      const birthDate = new Date(raw.dateofbirth);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+
+    // Normaliser le genre
+    let sex: 'M' | 'F' | undefined;
+    if (raw.gender) {
+      const g = raw.gender.toLowerCase();
+      if (g === 'male' || g === 'm' || g === 'homme') {
+        sex = 'M';
+      } else if (g === 'female' || g === 'f' || g === 'femme') {
+        sex = 'F';
+      }
+    }
+
+    // Extraire les infos du worker si expanded
+    let assignedWorkerName: string | undefined;
+    let assignedWorkerPhone: string | undefined;
+    if (raw.workerId && typeof raw.workerId === 'object') {
+      const worker = raw.workerId;
+      assignedWorkerName = [worker.first_name, worker.last_name].filter(Boolean).join(' ') || undefined;
+      assignedWorkerPhone = worker.phone_number;
+    }
+
+    // Retourner l'objet mappé avec les champs calculés
+    const mapped: HouseholdMember = {
+      ...raw,
+    };
+
+    // Ajouter les champs calculés uniquement s'ils ont une valeur
+    if (age !== undefined) mapped.age = age;
+    if (sex !== undefined) mapped.sex = sex;
+    if (assignedWorkerName) mapped.assignedWorkerName = assignedWorkerName;
+    if (assignedWorkerPhone) mapped.assignedWorkerPhone = assignedWorkerPhone;
+
+    return mapped;
   }
 
   onSearch() {
@@ -183,10 +158,10 @@ export class PatientsListComponent implements OnInit {
 
   applyFilters() {
     this.filteredPatients = this.patients.filter(patient => {
-      // Filtre recherche
+      // Filtre recherche (utilise les champs DB: firstname, lastname)
       const matchSearch = !this.searchTerm ||
-        (patient.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
-        (patient.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
+        (patient.lastname?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
+        (patient.firstname?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
         (patient.phoneNumber?.includes(this.searchTerm) ?? false) ||
         (patient.assignedWorkerName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false);
 
@@ -286,9 +261,40 @@ export class PatientsListComponent implements OnInit {
   }
 
   getPatientInitials(patient: HouseholdMember): string {
-    const first = patient.firstName?.charAt(0) || '';
-    const last = patient.lastName?.charAt(0) || '';
+    const first = patient.firstname?.charAt(0) || '';
+    const last = patient.lastname?.charAt(0) || '';
     return (first + last).toUpperCase();
+  }
+
+  /**
+   * Retourne le nom complet du patient
+   */
+  getPatientFullName(patient: HouseholdMember): string {
+    return [patient.firstname, patient.lastname].filter(Boolean).join(' ') || 'N/A';
+  }
+
+  /**
+   * Retourne le sexe normalisé (M/F) ou le genre brut
+   */
+  getPatientGender(patient: HouseholdMember): string {
+    if (patient.sex) return patient.sex;
+    if (patient.gender) {
+      const g = patient.gender.toLowerCase();
+      if (g === 'male' || g === 'm' || g === 'homme') return 'M';
+      if (g === 'female' || g === 'f' || g === 'femme') return 'F';
+      return patient.gender;
+    }
+    return '—';
+  }
+
+  /**
+   * Retourne le libellé du sexe
+   */
+  getGenderLabel(patient: HouseholdMember): string {
+    const gender = this.getPatientGender(patient);
+    if (gender === 'M') return 'Homme';
+    if (gender === 'F') return 'Femme';
+    return gender;
   }
 
   getLastMeasures(patient: HouseholdMember): string {

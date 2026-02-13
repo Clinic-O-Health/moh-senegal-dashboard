@@ -13,8 +13,8 @@ FROM nginx:alpine
 
 # Supprime la conf par défaut
 RUN rm /etc/nginx/conf.d/default.conf
-
-# Angular build output
+COPY . .
+# Angular build output (use local dist folder)
 # COPY --from=build /usr/local/app/dist/moh-dashboard-sn/browser /usr/share/nginx/html
 COPY ./dist/moh-dashboard-sn/browser /usr/share/nginx/html
 # Nginx frontend config

@@ -1,0 +1,141 @@
+[
+  {
+    "id": "moh-overview",
+    "name": "MOH Overview",
+    "icon": "chart-bar",
+    "description": "Key KPIs and current workload",
+    "panels": [
+      {
+        "id": "p-total-households",
+        "name": "Total Households",
+        "type": "metric",
+        "options": {
+          "collection": "household",
+          "aggregate": "count"
+        }
+      },
+      {
+        "id": "p-total-patients",
+        "name": "Total Patients",
+        "type": "metric",
+        "options": {
+          "collection": "householdmember",
+          "aggregate": "count"
+        }
+      },
+      {
+        "id": "p-risktests-high",
+        "name": "High Risk (Pre-screening)",
+        "type": "metric",
+        "options": {
+          "collection": "risktest",
+          "aggregate": "count",
+          "filter": { "risklevel": { "_gte": 5 } }
+        }
+      },
+      {
+        "id": "p-hta-elevated",
+        "name": "HTA Elevated",
+        "type": "metric",
+        "options": {
+          "collection": "screening",
+          "aggregate": "count",
+          "filter": { "type": { "_eq": "Hypertension" }, "flag": { "_eq": 2 } }
+        }
+      },
+      {
+        "id": "p-diabete-elevated",
+        "name": "Diabetes Elevated",
+        "type": "metric",
+        "options": {
+          "collection": "screeningdiabete",
+          "aggregate": "count",
+          "filter": { "flag": { "_eq": 2 } }
+        }
+      },
+      {
+        "id": "p-references-pending",
+        "name": "Pending References",
+        "type": "table",
+        "options": {
+          "collection": "patientreference",
+          "fields": ["id", "referenceillness", "referedcenter", "status", "createdat"],
+          "filter": { "status": { "_in": ["En cours", "En attente"] } },
+          "sort": ["-createdat"],
+          "limit": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "moh-trends",
+    "name": "Screening Trends",
+    "icon": "chart-line",
+    "description": "Monthly trends for HTA and Diabetes",
+    "panels": [
+      {
+        "id": "p-hta-monthly",
+        "name": "HTA Screenings per Month",
+        "type": "chart",
+        "options": {
+          "collection": "screening",
+          "filter": { "type": { "_eq": "Hypertension" } },
+          "dateField": "registrationdate",
+          "groupBy": "month",
+          "series": [
+            { "label": "HTA", "aggregate": "count" },
+            { "label": "Elevated", "aggregate": "count", "filter": { "flag": { "_eq": 2 } } }
+          ]
+        }
+      },
+      {
+        "id": "p-diabete-monthly",
+        "name": "Diabetes Screenings per Month",
+        "type": "chart",
+        "options": {
+          "collection": "screeningdiabete",
+          "dateField": "registrationdate",
+          "groupBy": "month",
+          "series": [
+            { "label": "All", "aggregate": "count" },
+            { "label": "Elevated", "aggregate": "count", "filter": { "flag": { "_eq": 2 } } }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "moh-performance",
+    "name": "ACS Performance",
+    "icon": "users",
+    "description": "Activity by community health workers",
+    "panels": [
+      {
+        "id": "p-top-acs-screenings",
+        "name": "Top ACS by Screenings",
+        "type": "chart",
+        "options": {
+          "collection": "screening",
+          "filter": { "type": { "_in": ["Hypertension", "Diabetes"] } },
+          "groupBy": "workerId",
+          "aggregate": "count",
+          "labelField": "workerId.first_name",
+          "labelField2": "workerId.last_name",
+          "limit": 10,
+          "sort": ["-count"]
+        }
+      },
+      {
+        "id": "p-followings-status",
+        "name": "Follow-ups Status",
+        "type": "table",
+        "options": {
+          "collection": "following",
+          "fields": ["id", "patientid", "referedwhere", "patientattended", "patientreceivcare", "createdat"],
+          "sort": ["-createdat"],
+          "limit": 10
+        }
+      }
+    ]
+  }
+]

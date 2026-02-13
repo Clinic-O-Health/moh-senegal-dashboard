@@ -222,11 +222,24 @@
         </td>
 
         <!-- Statut -->
-        <td class="px-4 py-3">
-          <p-tag
-            [value]="getStatusLabel(user.status)"
-            [severity]="getStatusSeverity(user.status)"
-          />
+        <td class="px-4 py-3" (click)="$event.stopPropagation()">
+          <div class="flex items-center gap-2">
+            <p-tag
+              [value]="getStatusLabel(user.status)"
+              [severity]="getStatusSeverity(user.status)"
+            />
+            <div
+              (click)="$event.stopPropagation()"
+              class="ml-2"
+            >
+              <p-toggleSwitch
+                [ngModel]="user.status === 'active'"
+                pTooltip="Activer l'utilisateur"
+                tooltipPosition="left"
+                (ngModelChange)="toggleUserStatus(user)"
+              />
+            </div>
+          </div>
         </td>
 
         <!-- Actions -->
@@ -241,7 +254,7 @@
               tooltipPosition="left"
               (onClick)="viewUser(user)"
             />
-            <p-button
+            <!-- <p-button
               icon="pi pi-pencil"
               [text]="true"
               [rounded]="true"
@@ -249,8 +262,8 @@
               pTooltip="Modifier"
               tooltipPosition="left"
               (onClick)="editUser(user)"
-            />
-            <p-button
+            /> -->
+            <!-- <p-button
               icon="pi pi-phone"
               [text]="true"
               [rounded]="true"
@@ -259,7 +272,7 @@
               tooltipPosition="left"
               (onClick)="callUser(user)"
               [disabled]="!user.phone_number"
-            />
+            /> -->
           </div>
         </td>
       </tr>
@@ -439,7 +452,7 @@
   <ng-template pTemplate="footer">
     <div class="flex justify-between">
       <div class="flex gap-2">
-        <p-button
+        <!-- <p-button
           label="Appeler"
           icon="pi pi-phone"
           severity="success"
@@ -453,9 +466,12 @@
           severity="info"
           [outlined]="true"
           (onClick)="emailUser(selectedUser!)"
-        />
+        /> -->
       </div>
       <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeUserModal()" />
     </div>
   </ng-template>
 </p-dialog>
+
+<!-- Toast for notifications -->
+<p-toast position="top-right" [life]="3000" />

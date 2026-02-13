@@ -12,7 +12,7 @@ export interface User {
   avatar?: string;
   language?: string;
   theme?: 'light' | 'dark' | 'auto';
-  status?: 'active' | 'invited' | 'draft' | 'suspended' | 'archived';
+  status?: 'active' | 'invited' | 'draft' | 'suspended' | 'archived' | 'uninvited' | 'unverified';
   role?: string | Role;
   token?: string;
   last_access?: Date | string;

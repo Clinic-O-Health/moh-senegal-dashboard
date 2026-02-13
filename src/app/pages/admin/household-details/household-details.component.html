@@ -6,13 +6,13 @@
       <ng-template pTemplate="header">
         <div class="p-4 border-b border-gray-200 flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900">Informations du ménage</h2>
-          <p-button
+          <!-- <p-button
             icon="pi pi-pencil"
             label="Modifier"
             size="small"
             [outlined]="true"
             (onClick)="editHousehold()"
-          />
+          />-->
         </div>
       </ng-template>
       <ng-template pTemplate="content">
@@ -114,7 +114,7 @@
             <h2 class="text-lg font-semibold text-gray-900">Membres du ménage</h2>
             <p class="text-sm text-gray-500 mt-1">{{ household?.totalMembers || 0 }} personnes</p>
           </div>
-          <p-button icon="pi pi-plus" label="Ajouter" size="small" (onClick)="addMember()" />
+          <!-- <p-button icon="pi pi-plus" label="Ajouter" size="small" (onClick)="addMember()" /> -->
         </div>
       </ng-template>
       <ng-template pTemplate="content">
@@ -150,7 +150,7 @@
                   </div>
                   <div>
                     <p class="text-gray-900 font-medium">
-                      {{ member.firstName }} {{ member.lastName }}
+                      {{ getMemberFullName(member) }}
                     </p>
                     <p class="text-xs text-gray-500">
                       <span *ngIf="member.phoneNumber">{{ member.phoneNumber }}</span>
@@ -331,7 +331,7 @@
       </ng-template>
       <ng-template pTemplate="content">
         <div class="flex flex-col gap-3">
-          <p-button
+          <!-- <p-button
             label="Ajouter un membre"
             icon="pi pi-user-plus"
             styleClass="w-full"
@@ -343,7 +343,7 @@
             styleClass="w-full"
             [outlined]="true"
             (onClick)="editHousehold()"
-          />
+          /> -->
           <p-button
             label="Exporter les données"
             icon="pi pi-download"

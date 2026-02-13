@@ -15,7 +15,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
 
-import { RiskTest, ScreeningHTA, ScreeningDiabete } from '@core/models/household';
+import { RiskTest, ScreeningHTA, ScreeningDiabete, PreScreeningAnswer, Awareness } from '@core/models/household';
+import { DirectusService } from '@core/services/directus.service';
+import { readItems } from '@directus/sdk';
 
 interface ScreeningWithPatient {
   patientName?: string;
@@ -52,11 +54,17 @@ export type ScreeningDiabeteWithPatient = ScreeningDiabete & ScreeningWithPatien
 })
 export class ScreeningsComponent implements OnInit {
   // Data
-  riskTests = signal<RiskTestWithPatient[]>([]);
+  preScreenings = signal<PreScreeningAnswer[]>([]);
+  awarenessData = signal<Awareness[]>([]);
   screeningsHTA = signal<ScreeningHTAWithPatient[]>([]);
   screeningsDiabete = signal<ScreeningDiabeteWithPatient[]>([]);
 
+  // Deprecated - keep for compatibility during transition
+  riskTests = signal<RiskTestWithPatient[]>([]);
+
   // Filtered data
+  filteredPreScreenings = signal<PreScreeningAnswer[]>([]);
+  filteredAwareness = signal<Awareness[]>([]);
   filteredRiskTests = signal<RiskTestWithPatient[]>([]);
   filteredScreeningsHTA = signal<ScreeningHTAWithPatient[]>([]);
   filteredScreeningsDiabete = signal<ScreeningDiabeteWithPatient[]>([]);
@@ -64,18 +72,25 @@ export class ScreeningsComponent implements OnInit {
   // Search & filters
   searchTerm = '';
   selectedRiskLevel: string | null = null;
+  selectedAwarenessLevel: string | null = null;
   selectedHTAGrade: string | null = null;
   selectedDiabeteGrade: string | null = null;
+  constructor(private readonly directusService: DirectusService) {}
+
 
   // Loading
   loading = signal(false);
 
   // Modals
-  showRiskTestModal = false;
+  showPreScreeningModal = false;
+  showAwarenessModal = false;
+  showRiskTestModal = false; // Deprecated - keep for compatibility
   showHTAModal = false;
   showDiabeteModal = false;
 
-  selectedRiskTest: RiskTestWithPatient | null = null;
+  selectedPreScreening: PreScreeningAnswer | null = null;
+  selectedAwareness: Awareness | null = null;
+  selectedRiskTest: RiskTestWithPatient | null = null; // Deprecated
   selectedScreeningHTA: ScreeningHTAWithPatient | null = null;
   selectedScreeningDiabete: ScreeningDiabeteWithPatient | null = null;
 
@@ -84,6 +99,12 @@ export class ScreeningsComponent implements OnInit {
     { label: 'Faible (0-2)', value: 'low' },
     { label: 'Modéré (3-4)', value: 'moderate' },
     { label: 'Élevé (5+)', value: 'high' },
+  ];
+
+  awarenessLevelOptions = [
+    { label: 'Bas', value: 'bas' },
+    { label: 'Moyen', value: 'moyen' },
+    { label: 'Bon', value: 'bon' },
   ];
 
   gradeOptions = [
@@ -95,203 +116,256 @@ export class ScreeningsComponent implements OnInit {
     this.loadData();
   }
 
-  loadData(): void {
+  async loadData(): Promise<void> {
     this.loading.set(true);
+    try {
+      const [preScreeningRaw, awarenessRaw, htaRaw, diabeteRaw] = await Promise.all([
+        this.directusService.directus.request(
+          readItems('prescreeninganswers', {
+            fields: [
+              '*',
+              'householdMemberId.id',
+              'householdMemberId.firstname',
+              'householdMemberId.lastname',
+              'householdMemberId.dateofbirth',
+              'householdMemberId.gender',
+              'workerId.first_name',
+              'workerId.last_name',
+            ],
+            sort: ['-createdAt'],
+          })
+        ),
+        this.directusService.directus.request(
+          readItems('awareness', {
+            fields: [
+              '*',
+              'householdMemberId.id',
+              'householdMemberId.firstname',
+              'householdMemberId.lastname',
+              'householdMemberId.dateofbirth',
+              'householdMemberId.gender',
+              'workerId.first_name',
+              'workerId.last_name',
+            ],
+            sort: ['-createdAt'],
+          })
+        ),
+        this.directusService.directus.request(
+          readItems('screening', {
+            filter: { type: { _eq: 'Hypertension' } },
+            fields: [
+              '*',
+              'patientid.id',
+              'patientid.firstname',
+              'patientid.lastname',
+              'patientid.dateofbirth',
+              'patientid.gender',
+              'workerId.first_name',
+              'workerId.last_name',
+            ],
+            sort: ['-createdat'],
+          })
+        ),
+        this.directusService.directus.request(
+          readItems('screeningdiabete', {
+            fields: [
+              '*',
+              'patientid.id',
+              'patientid.firstname',
+              'patientid.lastname',
+              'patientid.dateofbirth',
+              'patientid.gender',
+              'workerId.first_name',
+              'workerId.last_name',
+            ],
+            sort: ['-createdat'],
+          })
+        ),
+      ]);
 
-    // Test data - RiskTests (Prédépistage)
-    const riskTestsData: RiskTestWithPatient[] = [
-      {
-        id: 'rt-001',
-        patientid: 'p-001',
-        patientName: 'Amadou Diallo',
-        patientAge: 52,
-        patientSex: 'M',
-        workerName: 'Fatou Sow',
-        testdate: '2026-01-20',
-        testtype: 'Hypertension',
-        testresult: JSON.stringify({ age45Plus: true, familyHistory: true, obesity: false, smoking: true, sedentary: true }),
-        risklevel: 4,
-        isactive: true,
-        createdat: new Date('2026-01-20'),
-      },
-      {
-        id: 'rt-002',
-        patientid: 'p-002',
-        patientName: 'Mariama Fall',
-        patientAge: 48,
-        patientSex: 'F',
-        workerName: 'Ibrahima Ndiaye',
-        testdate: '2026-01-19',
-        testtype: 'Diabete',
-        testresult: JSON.stringify({ age45Plus: true, familyHistory: false, obesity: true, sedentary: true, hypertension: false }),
-        risklevel: 3,
-        isactive: true,
-        createdat: new Date('2026-01-19'),
-      },
-      {
-        id: 'rt-003',
-        patientid: 'p-003',
-        patientName: 'Ousmane Ba',
-        patientAge: 35,
-        patientSex: 'M',
-        workerName: 'Fatou Sow',
-        testdate: '2026-01-18',
-        testtype: 'Hypertension',
-        testresult: JSON.stringify({ age45Plus: false, familyHistory: false, obesity: false, smoking: false, sedentary: true }),
-        risklevel: 1,
-        isactive: true,
-        createdat: new Date('2026-01-18'),
-      },
-      {
-        id: 'rt-004',
-        patientid: 'p-004',
-        patientName: 'Aïssatou Sarr',
-        patientAge: 60,
-        patientSex: 'F',
-        workerName: 'Moussa Diop',
-        testdate: '2026-01-17',
-        testtype: 'Diabete',
-        testresult: JSON.stringify({ age45Plus: true, familyHistory: true, obesity: true, sedentary: true, hypertension: true }),
-        risklevel: 5,
-        isactive: true,
-        createdat: new Date('2026-01-17'),
-      },
-    ];
+      const mapSex = (gender?: string): 'M' | 'F' | undefined => {
+        if (!gender) return undefined;
+        const g = gender.toLowerCase();
+        if (g.startsWith('m') || g.includes('homme')) return 'M';
+        if (g.startsWith('f') || g.includes('femme')) return 'F';
+        return undefined;
+      };
 
-    // Test data - ScreeningHTA (Dépistage HTA)
-    const screeningsHTAData: ScreeningHTAWithPatient[] = [
-      {
-        id: 'hta-001',
-        patientid: 'p-001',
-        patientName: 'Amadou Diallo',
-        patientAge: 52,
-        patientSex: 'M',
-        workerName: 'Fatou Sow',
-        type: 'Hypertension',
-        didhavethedisease: 'Non',
-        armrightsystol: '145',
-        armleftsystol: '142',
-        armrightdiastol: '92',
-        armleftdiastol: '90',
-        sys_avarage: '143.5',
-        dias_avarage: '91',
-        flag: 2,
-        grade: 'Grade 1',
-        isactive: true,
-        registrationdate: new Date('2026-01-21'),
-        createdat: new Date('2026-01-21'),
-      },
-      {
-        id: 'hta-002',
-        patientid: 'p-003',
-        patientName: 'Ousmane Ba',
-        patientAge: 35,
-        patientSex: 'M',
-        workerName: 'Fatou Sow',
-        type: 'Hypertension',
-        didhavethedisease: 'Non',
-        armrightsystol: '118',
-        armleftsystol: '120',
-        armrightdiastol: '78',
-        armleftdiastol: '76',
-        sys_avarage: '119',
-        dias_avarage: '77',
-        flag: 0,
-        grade: 'Normal',
-        isactive: true,
-        registrationdate: new Date('2026-01-20'),
-        createdat: new Date('2026-01-20'),
-      },
-      {
-        id: 'hta-003',
-        patientid: 'p-005',
-        patientName: 'Khady Mbaye',
-        patientAge: 58,
-        patientSex: 'F',
-        workerName: 'Ibrahima Ndiaye',
-        type: 'Hypertension',
-        didhavethedisease: 'Oui',
-        armrightsystol: '162',
-        armleftsystol: '158',
-        armrightdiastol: '102',
-        armleftdiastol: '98',
-        sys_avarage: '160',
-        dias_avarage: '100',
-        flag: 2,
-        grade: 'Grade 2',
-        isactive: true,
-        registrationdate: new Date('2026-01-19'),
-        createdat: new Date('2026-01-19'),
-      },
-    ];
+      const calcAge = (dob?: string | Date): number | undefined => {
+        if (!dob) return undefined;
+        const birth = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+      };
 
-    // Test data - ScreeningDiabete (Dépistage Diabète)
-    const screeningsDiabeteData: ScreeningDiabeteWithPatient[] = [
-      {
-        id: 'diab-001',
-        patientid: 'p-002',
-        patientName: 'Mariama Fall',
-        patientAge: 48,
-        patientSex: 'F',
-        workerName: 'Ibrahima Ndiaye',
-        type: 'Diabetes',
-        glucose_level: '1.35',
-        eatornot: 'Non',
-        didhavethedisease: 'Non',
-        flag: 2,
-        grade: 'Élevé',
-        isactive: true,
-        registrationdate: new Date('2026-01-20'),
-        createdat: new Date('2026-01-20'),
-      },
-      {
-        id: 'diab-002',
-        patientid: 'p-004',
-        patientName: 'Aïssatou Sarr',
-        patientAge: 60,
-        patientSex: 'F',
-        workerName: 'Moussa Diop',
-        type: 'Diabetes',
-        glucose_level: '2.10',
-        eatornot: 'Non',
-        didhavethedisease: 'Oui',
-        flag: 2,
-        grade: 'Très élevé',
-        isactive: true,
-        registrationdate: new Date('2026-01-18'),
-        createdat: new Date('2026-01-18'),
-      },
-      {
-        id: 'diab-003',
-        patientid: 'p-006',
-        patientName: 'Mamadou Sy',
-        patientAge: 42,
-        patientSex: 'M',
-        workerName: 'Fatou Sow',
-        type: 'Diabetes',
-        glucose_level: '0.95',
-        eatornot: 'Oui',
-        didhavethedisease: 'Non',
-        flag: 0,
-        grade: 'Normal',
-        isactive: true,
-        registrationdate: new Date('2026-01-17'),
-        createdat: new Date('2026-01-17'),
-      },
-    ];
+      // Calculate risk level from prescreening answers
+      const calculateRiskLevel = (answers?: any): { level: number; label: string } => {
+        if (!answers || typeof answers !== 'object') {
+          return { level: 0, label: 'Indéterminé' };
+        }
 
-    this.riskTests.set(riskTestsData);
-    this.screeningsHTA.set(screeningsHTAData);
-    this.screeningsDiabete.set(screeningsDiabeteData);
+        let score = 0;
+        Object.values(answers as Record<string, any>).forEach((value) => {
+          if (value === true || value === 'true' || value === 'Oui' || value === 'Yes') {
+            score += 1;
+          }
+        });
 
-    this.filteredRiskTests.set(riskTestsData);
-    this.filteredScreeningsHTA.set(screeningsHTAData);
-    this.filteredScreeningsDiabete.set(screeningsDiabeteData);
+        if (score <= 2) return { level: score, label: 'Faible' };
+        if (score <= 4) return { level: score, label: 'Modéré' };
+        return { level: score, label: 'Élevé' };
+      };
 
-    this.loading.set(false);
+      // Calculate awareness knowledge score
+      const calculateKnowledgeScore = (awareness: any): { hypertension: number; diabetes: number; overall: 'bas' | 'moyen' | 'bon' } => {
+        let htaScore = 0;
+        let diabetesScore = 0;
+
+        // HTA Knowledge scoring
+        if (awareness.hypertension_knowledge?.includes('savent ce que c\'est') ||
+            awareness.hypertension_knowledge?.includes('know what it is')) htaScore += 1;
+        if (awareness.hypertension_symptoms?.includes('plus de trois') ||
+            awareness.hypertension_symptoms?.includes('more than three')) htaScore += 1;
+        if (awareness.hypertension_action?.includes('sais quoi faire') ||
+            awareness.hypertension_action?.includes('know what to do')) htaScore += 1;
+
+        // Diabetes Knowledge scoring
+        if (awareness.diabetes_knowledge?.includes('sais ce que c\'est') ||
+            awareness.diabetes_knowledge?.includes('know what it is')) diabetesScore += 1;
+        if (awareness.diabetes_signs?.includes('sais ce que c\'est') ||
+            awareness.diabetes_signs?.includes('know what it is')) diabetesScore += 1;
+        if (awareness.diabetes_action?.includes('sais quoi faire') ||
+            awareness.diabetes_action?.includes('know what to do')) diabetesScore += 1;
+
+        const avgScore = (htaScore + diabetesScore) / 6;
+        let overall: 'bas' | 'moyen' | 'bon';
+        if (avgScore < 0.33) overall = 'bas';
+        else if (avgScore < 0.67) overall = 'moyen';
+        else overall = 'bon';
+
+        return { hypertension: htaScore, diabetes: diabetesScore, overall };
+      };
+
+      // Map prescreening data
+      const preScreeningData: PreScreeningAnswer[] = (preScreeningRaw as any[]).map((ps) => {
+        const risk = calculateRiskLevel(ps.answers);
+        return {
+          ...ps,
+          patientName: [ps.householdMemberId?.firstname, ps.householdMemberId?.lastname].filter(Boolean).join(' '),
+          patientAge: calcAge(ps.householdMemberId?.dateofbirth),
+          patientSex: mapSex(ps.householdMemberId?.gender),
+          workerName: [ps.workerId?.first_name, ps.workerId?.last_name].filter(Boolean).join(' '),
+          riskLevel: risk.level,
+          riskLevelLabel: risk.label,
+        };
+      });
+
+      // Map awareness data
+      const awarenessData: Awareness[] = (awarenessRaw as any[]).map((aw) => {
+        const knowledge = calculateKnowledgeScore(aw);
+        return {
+          ...aw,
+          patientName: [aw.householdMemberId?.firstname, aw.householdMemberId?.lastname].filter(Boolean).join(' '),
+          patientAge: calcAge(aw.householdMemberId?.dateofbirth),
+          patientSex: mapSex(aw.householdMemberId?.gender),
+          workerName: [aw.workerId?.first_name, aw.workerId?.last_name].filter(Boolean).join(' '),
+          hypertensionKnowledgeScore: knowledge.hypertension,
+          diabetesKnowledgeScore: knowledge.diabetes,
+          overallKnowledgeLevel: knowledge.overall,
+        };
+      });
+
+      const screeningsHTAData: ScreeningHTAWithPatient[] = (htaRaw as any[]).map((s) => ({
+        ...s,
+        patientName: [s.patientid?.firstname, s.patientid?.lastname].filter(Boolean).join(' '),
+        patientAge: calcAge(s.patientid?.dateofbirth),
+        patientSex: mapSex(s.patientid?.gender),
+        workerName: [s.workerId?.first_name, s.workerId?.last_name].filter(Boolean).join(' '),
+      }));
+
+      const screeningsDiabeteData: ScreeningDiabeteWithPatient[] = (diabeteRaw as any[]).map((s) => ({
+        ...s,
+        patientName: [s.patientid?.firstname, s.patientid?.lastname].filter(Boolean).join(' '),
+        patientAge: calcAge(s.patientid?.dateofbirth),
+        patientSex: mapSex(s.patientid?.gender),
+        workerName: [s.workerId?.first_name, s.workerId?.last_name].filter(Boolean).join(' '),
+      }));
+
+      // Set new data
+      this.preScreenings.set(preScreeningData);
+      this.awarenessData.set(awarenessData);
+      this.screeningsHTA.set(screeningsHTAData);
+      this.screeningsDiabete.set(screeningsDiabeteData);
+
+      // Set filtered data
+      this.filteredPreScreenings.set(preScreeningData);
+      this.filteredAwareness.set(awarenessData);
+      this.filteredScreeningsHTA.set(screeningsHTAData);
+      this.filteredScreeningsDiabete.set(screeningsDiabeteData);
+
+      // Keep legacy for compatibility during transition
+      this.riskTests.set([]);
+      this.filteredRiskTests.set([]);
+    } catch (error) {
+      console.error('Erreur lors du chargement des examens:', error);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
-  // Risk Tests filters
+  // PreScreening filters
+  applyPreScreeningFilters(): void {
+    let filtered = [...this.preScreenings()];
+
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (ps) =>
+          ps.patientName?.toLowerCase().includes(term) ||
+          ps.workerName?.toLowerCase().includes(term) ||
+          ps.disease?.toLowerCase().includes(term)
+      );
+    }
+
+    if (this.selectedRiskLevel) {
+      filtered = filtered.filter((ps) => {
+        const level = ps.riskLevel || 0;
+        if (this.selectedRiskLevel === 'low') return level <= 2;
+        if (this.selectedRiskLevel === 'moderate') return level >= 3 && level <= 4;
+        if (this.selectedRiskLevel === 'high') return level >= 5;
+        return true;
+      });
+    }
+
+    this.filteredPreScreenings.set(filtered);
+  }
+
+  // Awareness filters
+  applyAwarenessFilters(): void {
+    let filtered = [...this.awarenessData()];
+
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (aw) =>
+          aw.patientName?.toLowerCase().includes(term) ||
+          aw.workerName?.toLowerCase().includes(term)
+      );
+    }
+
+    if (this.selectedAwarenessLevel) {
+      filtered = filtered.filter((aw) => {
+        return aw.overallKnowledgeLevel === this.selectedAwarenessLevel;
+      });
+    }
+
+    this.filteredAwareness.set(filtered);
+  }
+
+  // Risk Tests filters (deprecated but kept for compatibility)
   applyRiskTestFilters(): void {
     let filtered = [...this.riskTests()];
 
@@ -366,6 +440,14 @@ export class ScreeningsComponent implements OnInit {
     this.filteredScreeningsDiabete.set(filtered);
   }
 
+  onSearchPreScreenings(): void {
+    this.applyPreScreeningFilters();
+  }
+
+  onSearchAwareness(): void {
+    this.applyAwarenessFilters();
+  }
+
   onSearchRiskTests(): void {
     this.applyRiskTestFilters();
   }
@@ -376,6 +458,18 @@ export class ScreeningsComponent implements OnInit {
 
   onSearchDiabete(): void {
     this.applyDiabeteFilters();
+  }
+
+  resetPreScreeningFilters(): void {
+    this.searchTerm = '';
+    this.selectedRiskLevel = null;
+    this.filteredPreScreenings.set(this.preScreenings());
+  }
+
+  resetAwarenessFilters(): void {
+    this.searchTerm = '';
+    this.selectedAwarenessLevel = null;
+    this.filteredAwareness.set(this.awarenessData());
   }
 
   resetRiskTestFilters(): void {
@@ -397,6 +491,26 @@ export class ScreeningsComponent implements OnInit {
   }
 
   // Modal methods
+  viewPreScreening(preScreening: PreScreeningAnswer): void {
+    this.selectedPreScreening = preScreening;
+    this.showPreScreeningModal = true;
+  }
+
+  closePreScreeningModal(): void {
+    this.showPreScreeningModal = false;
+    this.selectedPreScreening = null;
+  }
+
+  viewAwareness(awareness: Awareness): void {
+    this.selectedAwareness = awareness;
+    this.showAwarenessModal = true;
+  }
+
+  closeAwarenessModal(): void {
+    this.showAwarenessModal = false;
+    this.selectedAwareness = null;
+  }
+
   viewRiskTest(riskTest: RiskTestWithPatient): void {
     this.selectedRiskTest = riskTest;
     this.showRiskTestModal = true;
@@ -452,6 +566,51 @@ export class ScreeningsComponent implements OnInit {
     return flag === 0 ? 'success' : 'danger';
   }
 
+  // Parse prescreening answers from JSON
+  parsePreScreeningAnswers(answers: any): { label: string; value: boolean }[] {
+    if (!answers || typeof answers !== 'object') return [];
+
+    const labels: Record<string, string> = {
+      age45Plus: 'Âge > 45 ans',
+      familyHistory: 'Antécédents familiaux',
+      obesity: 'Obésité',
+      smoking: 'Tabagisme',
+      sedentary: 'Sédentarité',
+      hypertension: 'Hypertension',
+      diabetes: 'Diabète',
+      highCholesterol: 'Cholestérol élevé',
+      heartDisease: 'Maladie cardiaque',
+      stroke: 'AVC',
+      physicalInactivity: 'Inactivité physique',
+      poorDiet: 'Alimentation déséquilibrée',
+    };
+
+    return Object.entries(answers).map(([key, value]) => ({
+      label: labels[key] || key,
+      value: value === true || value === 'true' || value === 'Oui' || value === 'Yes',
+    }));
+  }
+
+  // Get awareness level severity
+  getAwarenessLevelSeverity(level: string | undefined): 'success' | 'warn' | 'danger' | 'secondary' {
+    switch (level) {
+      case 'bon': return 'success';
+      case 'moyen': return 'warn';
+      case 'bas': return 'danger';
+      default: return 'secondary';
+    }
+  }
+
+  // Get awareness level label
+  getAwarenessLevelLabel(level: string | undefined): string {
+    switch (level) {
+      case 'bon': return 'Bonne connaissance';
+      case 'moyen': return 'Connaissance moyenne';
+      case 'bas': return 'Connaissance faible';
+      default: return 'Indéterminée';
+    }
+  }
+
   parseRiskFactors(testresult: string | undefined): { label: string; value: boolean }[] {
     if (!testresult) return [];
     try {
@@ -483,12 +642,29 @@ export class ScreeningsComponent implements OnInit {
   }
 
   // Stats
+  getPreScreeningsCount(): number {
+    return this.preScreenings().length;
+  }
+
+  getPreScreeningHighRiskCount(): number {
+    return this.preScreenings().filter((ps) => (ps.riskLevel || 0) >= 5).length;
+  }
+
+  getAwarenessCount(): number {
+    return this.awarenessData().length;
+  }
+
+  getGoodAwarenessCount(): number {
+    return this.awarenessData().filter((aw) => aw.overallKnowledgeLevel === 'bon').length;
+  }
+
+  // Legacy methods for compatibility
   getRiskTestsCount(): number {
-    return this.riskTests().length;
+    return this.getPreScreeningsCount(); // Use prescreening data
   }
 
   getHighRiskCount(): number {
-    return this.riskTests().filter((rt) => (rt.risklevel || 0) >= 5).length;
+    return this.getPreScreeningHighRiskCount(); // Use prescreening data
   }
 
   getHTACount(): number {
@@ -508,6 +684,6 @@ export class ScreeningsComponent implements OnInit {
   }
 
   getTotalScreenings(): number {
-    return this.getRiskTestsCount() + this.getHTACount() + this.getDiabeteCount();
+    return this.getPreScreeningsCount() + this.getAwarenessCount() + this.getHTACount() + this.getDiabeteCount();
   }
 }

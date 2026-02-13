@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +11,8 @@ import { CardModule } from 'primeng/card';
 import { TooltipModule } from 'primeng/tooltip';
 import { DividerModule } from 'primeng/divider';
 import { Household, HouseholdMember } from '@core/models/household';
+import { DirectusService } from '@core/services/directus.service';
+import { readItem, readItems } from '@directus/sdk';
 
 @Component({
   selector: 'app-household-details',
@@ -36,116 +38,139 @@ export class HouseholdDetailsComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly directusService: DirectusService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadHousehold();
   }
 
-  loadHousehold() {
+  async loadHousehold() {
     this.loading = true;
     const id = this.route.snapshot.paramMap.get('id');
-    // Simuler le chargement des données
-    setTimeout(() => {
-      this.household = {
-        id: id || '1',
-        location: 'Cité Mixta, Rue 12',
-        commune: 'Pikine',
-        district: 'Pikine Est',
-        headOfHouseHoldContact: '+221 77 123 45 67',
-        typeOfWater: 'Robinet',
-        typeLatrine: 'Moderne',
-        dailyExpenditure: '15000',
-        hasGarbageCollectionService: true,
-        timeToNearestHealthCenterMinutes: '15',
-        lastDoctorVisitDate: new Date('2025-12-10'),
-        doctorVisitsLast12Months: '3',
-        totalMembers: 6,
-        membersScreened: 4,
-        membersAtRisk: 2,
-        workerId: 'worker-123',
-        workerName: 'Fatou Dieng',
-        members: [
-          {
-            id: '1',
-            firstName: 'Mamadou',
-            lastName: 'Diop',
-            relationshipToHead: 'Chef de ménage',
-            age: 45,
-            sex: 'M',
-            phoneNumber: '+221 77 123 45 67',
-            matrimonialStatus: 'Marié',
-            filledAwarenessForm: true,
-            filledScreeningForm: true,
-            htaClassification: 'elevee',
-            diabetesClassification: 'normale',
-            followUpStatus: 'risque',
-          },
-          {
-            id: '2',
-            firstName: 'Aissatou',
-            lastName: 'Diop',
-            relationshipToHead: 'Épouse',
-            age: 40,
-            sex: 'F',
-            matrimonialStatus: 'Mariée',
-            filledAwarenessForm: true,
-            filledScreeningForm: true,
-            htaClassification: 'normale',
-            diabetesClassification: 'normale',
-            followUpStatus: 'stable',
-          },
-          {
-            id: '3',
-            firstName: 'Fatou',
-            lastName: 'Diop',
-            relationshipToHead: 'Fille',
-            age: 18,
-            sex: 'F',
-            filledAwarenessForm: false,
-            filledScreeningForm: false,
-            followUpStatus: 'actif',
-          },
-          {
-            id: '4',
-            firstName: 'Ibrahima',
-            lastName: 'Diop',
-            relationshipToHead: 'Fils',
-            age: 15,
-            sex: 'M',
-            filledAwarenessForm: true,
-            filledScreeningForm: true,
-            htaClassification: 'normale',
-            diabetesClassification: 'normale',
-            followUpStatus: 'stable',
-          },
-          {
-            id: '5',
-            firstName: 'Mariama',
-            lastName: 'Diop',
-            relationshipToHead: 'Fille',
-            age: 12,
-            sex: 'F',
-            filledAwarenessForm: false,
-            filledScreeningForm: false,
-            followUpStatus: 'actif',
-          },
-          {
-            id: '6',
-            firstName: 'Cheikh',
-            lastName: 'Diop',
-            relationshipToHead: 'Fils',
-            age: 8,
-            sex: 'M',
-            filledAwarenessForm: true,
-            filledScreeningForm: false,
-            followUpStatus: 'actif',
-          },
-        ],
-      };
+
+    if (!id) {
       this.loading = false;
-    }, 800);
+      return;
+    }
+
+    try {
+      // Charger le ménage depuis Directus
+      const householdData = await this.directusService.directus.request(
+        readItem('household', id, {
+          fields: ['*']
+        })
+      ) as Household;
+
+      // Charger les membres du ménage
+      const members = await this.directusService.directus.request(
+        readItems('householdmember', {
+          filter: { householdid: { _eq: id } },
+          fields: [
+            '*',
+            'workerId.id',
+            'workerId.first_name',
+            'workerId.last_name',
+            'workerId.phone_number'
+          ]
+        })
+      ) as HouseholdMember[];
+
+      // Mapper les membres
+      const mappedMembers = members.map(m => this.mapMember(m));
+
+      // Calculer les statistiques
+      const totalMembers = mappedMembers.length;
+      const membersScreened = mappedMembers.filter(m => m.filledScreeningForm).length;
+      const membersAtRisk = mappedMembers.filter(m =>
+        m.htaClassification === 'elevee' || m.diabetesClassification === 'elevee'
+      ).length;
+
+      // Récupérer le nom de l'ACS si disponible
+      let workerName = '';
+      const headOfHousehold = mappedMembers.find(m => m.isheadofhousehold);
+      if (headOfHousehold?.assignedWorkerName) {
+        workerName = headOfHousehold.assignedWorkerName;
+      }
+
+      this.household = {
+        ...householdData,
+        members: mappedMembers,
+        totalMembers,
+        membersScreened,
+        membersAtRisk,
+        workerName
+      };
+
+      console.log('Ménage chargé:', this.household);
+    } catch (error) {
+      console.error('Erreur lors du chargement du ménage:', error);
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges(); // Forcer la détection de changements
+    }
+  }
+
+  /**
+   * Mappe un membre brut de Directus vers le format attendu
+   */
+  mapMember(raw: HouseholdMember): HouseholdMember {
+    // Calculer l'âge depuis dateofbirth
+    let age: number | undefined;
+    if (raw.dateofbirth) {
+      const birthDate = new Date(raw.dateofbirth);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+
+    // Normaliser le genre
+    let sex: 'M' | 'F' | undefined;
+    if (raw.gender) {
+      const g = raw.gender.toLowerCase();
+      if (g === 'male' || g === 'm' || g === 'homme') {
+        sex = 'M';
+      } else if (g === 'female' || g === 'f' || g === 'femme') {
+        sex = 'F';
+      }
+    }
+
+    // Extraire les infos du worker si expanded
+    let assignedWorkerName: string | undefined;
+    let assignedWorkerPhone: string | undefined;
+    if (raw.workerId && typeof raw.workerId === 'object') {
+      const worker = raw.workerId;
+      assignedWorkerName = [worker.first_name, worker.last_name].filter(Boolean).join(' ') || undefined;
+      assignedWorkerPhone = worker.phone_number;
+    }
+
+    // Déterminer le lien avec le chef de ménage
+    let relationshipToHead = 'Membre';
+    if (raw.isheadofhousehold) {
+      relationshipToHead = 'Chef de ménage';
+    }
+
+    const mapped: HouseholdMember = {
+      ...raw,
+    };
+
+    if (age !== undefined) mapped.age = age;
+    if (sex !== undefined) mapped.sex = sex;
+    if (assignedWorkerName) mapped.assignedWorkerName = assignedWorkerName;
+    if (assignedWorkerPhone) mapped.assignedWorkerPhone = assignedWorkerPhone;
+    mapped.relationshipToHead = relationshipToHead;
+
+    return mapped;
+  }
+
+  // Helper pour obtenir le nom complet du membre
+  getMemberFullName(member: HouseholdMember): string {
+    return [member.firstname, member.lastname].filter(Boolean).join(' ');
   }
 
   addMember() {
@@ -219,8 +244,8 @@ export class HouseholdDetailsComponent implements OnInit {
   }
 
   getMemberInitials(member: HouseholdMember): string {
-    const first = member.firstName?.charAt(0) || '';
-    const last = member.lastName?.charAt(0) || '';
+    const first = member.firstname?.charAt(0) || '';
+    const last = member.lastname?.charAt(0) || '';
     return (first + last).toUpperCase();
   }
 
