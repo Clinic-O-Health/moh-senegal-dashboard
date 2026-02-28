@@ -1,0 +1,42 @@
+{
+  "AWARENESS_FORM": {
+        "TITLE": "Formulaire de Sensibilisation",
+        "SUBMIT": "Enregistrer",
+        "ERROR": "Veuillez sélectionner une option pour toutes les questions",
+        "SUCCESS": "Enregistrement de sensibilisation effectué avec succès",
+        "HYPERTENSION_KNOWLEDGE": {
+            "QUESTION": "Le patient connaît-il l'hypertension – peut-il l'expliquer ?",
+            "KNOW": "Oui, ils savent ce que c'est.",
+            "KNOW_LITTLE": "Oui, ils en savent un peu.",
+            "DONT_KNOW": "Non, ils ne savent rien."
+        },
+        "HYPERTENSION_SYMPTOMS": {
+            "QUESTION": "Le patient peut-il fournir des symptômes de l'hypertension ?",
+            "MORE_THAN_THREE": "Oui, ils peuvent fournir plus de trois symptômes.",
+            "ONE_TO_THREE": "Oui, ils peuvent fournir un à trois symptômes.",
+            "NONE": "Non, ils ne peuvent fournir aucun symptôme."
+        },
+        "HYPERTENSION_ACTION": {
+            "QUESTION": "Savez-vous quoi faire en cas d'hypertension ?",
+            "KNOW_ACTION": "Oui, je sais quoi faire (contacter un agent de santé).",
+            "DONT_KNOW_ACTION": "Non, je ne sais pas."
+        },
+        "DIABETES_KNOWLEDGE": {
+            "QUESTION": "Savez-vous ce qu'est le diabète ?",
+            "KNOW": "Oui, je sais ce que c'est.",
+            "KNOW_LITTLE": "Oui, j'en sais un peu.",
+            "DONT_KNOW": "Non, je ne sais rien."
+        },
+        "DIABETES_SIGNS": {
+            "QUESTION": "Connaissez-vous les signes du diabète ?",
+            "KNOW": "Oui, je sais quels ils sont.",
+            "KNOW_LITTLE": "Oui, j'en sais un peu.",
+            "DONT_KNOW": "Non, je ne sais pas."
+        },
+        "DIABETES_ACTION": {
+            "QUESTION": "Savez-vous quoi faire en cas de diabète ?",
+            "KNOW_ACTION": "Oui, je sais quoi faire (contacter un agent de santé).",
+            "DONT_KNOW_ACTION": "Non, je ne sais pas."
+        }
+    }
+}

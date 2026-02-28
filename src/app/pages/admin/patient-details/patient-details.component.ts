@@ -30,6 +30,7 @@ import {
 import { DirectusService } from '@core/services/directus.service';
 import { AuthService, User } from '@core/services/auth.service';
 import { readItem, readItems, readUsers, createItem } from '@directus/sdk';
+import * as factors from '@core/constants/factors.json';
 
 @Component({
   selector: 'app-patient-details',
@@ -297,6 +298,7 @@ export class PatientDetailsComponent implements OnInit {
       // Charger les données associées en parallèle
       await Promise.all([
         this.loadRiskTests(id),
+        this.loadPreScreenings(id),
         this.loadScreeningsHTA(id),
         this.loadScreeningsDiabete(id),
         this.loadReferences(id),
@@ -380,6 +382,47 @@ export class PatientDetailsComponent implements OnInit {
 
       if (this.member) {
         this.member.riskTests = riskTests;
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des prédépistages:', error);
+    }
+  }
+
+  async loadPreScreenings(patientId: string) {
+    try {
+      const preScreeningsRaw = await this.directusService.directus.request(
+        readItems('prescreeninganswers', {
+          filter: { 'householdMemberId': { _eq: patientId } },
+          fields: [
+            '*',
+            'householdMemberId.id',
+            'householdMemberId.firstname',
+            'householdMemberId.lastname',
+            'householdMemberId.dateofbirth',
+            'householdMemberId.gender',
+            'workerId.first_name',
+            'workerId.last_name',
+          ],
+          sort: ['-createdAt'],
+        })
+      );
+
+      // Calculate risk level and map data
+      const preScreenings = (preScreeningsRaw as any[]).map((ps) => {
+        const risk = this.calculateRiskLevel(ps.answers);
+        return {
+          ...ps,
+          patientName: [ps.householdMemberId?.firstname, ps.householdMemberId?.lastname].filter(Boolean).join(' '),
+          patientAge: this.calcAge(ps.householdMemberId?.dateofbirth),
+          patientSex: this.mapSex(ps.householdMemberId?.gender),
+          workerName: [ps.workerId?.first_name, ps.workerId?.last_name].filter(Boolean).join(' '),
+          riskLevel: risk.level,
+          riskLevelLabel: risk.label,
+        };
+      });
+
+      if (this.member) {
+        this.member.preScreenings = preScreenings;
       }
     } catch (error) {
       console.error('Erreur lors du chargement des prédépistages:', error);
@@ -475,7 +518,70 @@ export class PatientDetailsComponent implements OnInit {
     }
   }
 
-  // Helper pour obtenir le nom complet du patient
+  // Helper methods
+  mapSex(gender?: string): 'M' | 'F' | undefined {
+    if (!gender) return undefined;
+    const g = gender.toLowerCase();
+    if (g.startsWith('m') || g.includes('homme')) return 'M';
+    if (g.startsWith('f') || g.includes('femme')) return 'F';
+    return undefined;
+  }
+
+  calcAge(dob?: string | Date): number | undefined {
+    if (!dob) return undefined;
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  }
+
+  // Calculate risk level from prescreening answers
+  calculateRiskLevel(answers?: any): { level: number; label: string } {
+    if (!answers || typeof answers !== 'object') {
+      return { level: 0, label: 'Indéterminé' };
+    }
+
+    let score = 0;
+    Object.values(answers as Record<string, any>).forEach((value) => {
+      if (value === true || value === 'true' || value === 'Oui' || value === 'Yes') {
+        score += 1;
+      }
+    });
+
+    if (score <= 2) return { level: score, label: 'Faible' };
+    if (score <= 4) return { level: score, label: 'Modéré' };
+    return { level: score, label: 'Élevé' };
+  }
+
+  // Parse prescreening answers from JSON
+  parsePreScreeningAnswers(answers: Record<string, string>): { label: string; value: boolean; answer: any }[] {
+    if (!answers || typeof answers !== 'object') return [];
+
+    const labels: Record<string, string> = factors.factors;
+    const answersMap: Record<string, string> = factors.answers;
+
+    return Object.entries(answers).map(([key, value]) => ({
+      label: labels[key] || key,
+      value: answersMap[value]?.includes('Oui') || false,
+      answer: answersMap[value] || value,
+    }));
+  }
+
+  getRiskLevelSeverity(level: number | undefined): 'success' | 'warn' | 'danger' | 'secondary' {
+    if (!level) return 'secondary';
+    if (level <= 2) return 'success';
+    if (level <= 4) return 'warn';
+    return 'danger';
+  }
+
+  getRiskLevelLabel(level: number | undefined): string {
+    if (!level) return 'N/A';
+    if (level <= 2) return 'Faible';
+    if (level <= 4) return 'Modéré';
+    return 'Élevé';
+  }
   getMemberFullName(): string {
     if (!this.member) return '';
     return [this.member.firstname, this.member.lastname].filter(Boolean).join(' ');
@@ -595,7 +701,7 @@ export class PatientDetailsComponent implements OnInit {
     return labels[role] || role;
   }
 
-  getRiskLevelLabel(level: string | undefined): string {
+  getRiskLevelLabelFromString(level: string | undefined): string {
     if (!level) return '';
     const labels: Record<string, string> = {
       faible: 'Faible',
@@ -605,7 +711,7 @@ export class PatientDetailsComponent implements OnInit {
     return labels[level] || level;
   }
 
-  getRiskLevelSeverity(
+  getRiskLevelSeverityFromString(
     level: string | undefined
   ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
     const severities: Record<string, 'success' | 'info' | 'warn' | 'danger' | 'secondary'> = {
@@ -1074,25 +1180,30 @@ export class PatientDetailsComponent implements OnInit {
     let htaScore = 0;
     let diabetesScore = 0;
 
-    // Score HTA (0-3)
-    if (awareness.hypertension_knowledge?.includes('Oui, ils savent')) htaScore++;
-    if (awareness.hypertension_symptoms?.includes('plus de trois')) htaScore += 2;
-    else if (awareness.hypertension_symptoms?.includes('un à trois')) htaScore += 1;
-    if (awareness.hypertension_action?.includes('Oui')) htaScore++;
+    // HTA Knowledge scoring using proper key matching
+    if (awareness.hypertension_knowledge === 'know') htaScore += 1;
+    else if (awareness.hypertension_knowledge === 'know_little') htaScore += 0.5;
 
-    // Score Diabète (0-3)
-    if (awareness.diabetes_knowledge?.includes('Oui, je sais ce que')) diabetesScore++;
-    if (awareness.diabetes_signs?.includes('Oui, je sais ce que')) diabetesScore += 2;
-    else if (awareness.diabetes_signs?.includes('Oui, j\'en sais')) diabetesScore += 1;
-    if (awareness.diabetes_action?.includes('Oui')) diabetesScore++;
+    if (awareness.hypertension_symptoms === 'more_than_three') htaScore += 1;
+    else if (awareness.hypertension_symptoms === 'one_to_three') htaScore += 0.5;
 
-    const totalScore = htaScore + diabetesScore;
-    const maxScore = 8;
-    const percentage = (totalScore / maxScore) * 100;
+    if (awareness.hypertension_action === 'know_action') htaScore += 1;
 
-    if (percentage >= 75) {
-      return { label: 'Excellente connaissance', severity: 'success' };
-    } else if (percentage >= 50) {
+    // Diabetes Knowledge scoring using proper key matching
+    if (awareness.diabetes_knowledge === 'know') diabetesScore += 1;
+    else if (awareness.diabetes_knowledge === 'know_little') diabetesScore += 0.5;
+
+    if (awareness.diabetes_signs === 'know') diabetesScore += 1;
+    else if (awareness.diabetes_signs === 'know_little') diabetesScore += 0.5;
+
+    if (awareness.diabetes_action === 'know_action') diabetesScore += 1;
+
+    const maxScore = 3; // Maximum score per category (hypertension or diabetes)
+    const avgScore = ((htaScore / maxScore) + (diabetesScore / maxScore)) / 2;
+
+    if (avgScore >= 0.67) {
+      return { label: 'Bonne connaissance', severity: 'success' };
+    } else if (avgScore >= 0.33) {
       return { label: 'Connaissance moyenne', severity: 'warn' };
     } else {
       return { label: 'Connaissance faible', severity: 'danger' };
@@ -1133,12 +1244,7 @@ export class PatientDetailsComponent implements OnInit {
 
   // ==================== HELPER METHODS ====================
 
-  getRiskLevelSeverityLabel(level: number | undefined): 'success' | 'warn' | 'danger' | 'secondary' {
-    if (!level) return 'secondary';
-    if (level <= 2) return 'success';
-    if (level <= 4) return 'warn';
-    return 'danger';
-  }
+
 
   // getRiskLevelLabel(level: number | undefined): string {
   //   if (!level) return 'N/A';
@@ -1157,30 +1263,7 @@ export class PatientDetailsComponent implements OnInit {
     return flag === 0 ? 'success' : 'danger';
   }
 
-  // Parse prescreening answers from JSON
-  parsePreScreeningAnswers(answers: any): { label: string; value: boolean }[] {
-    if (!answers || typeof answers !== 'object') return [];
 
-    const labels: Record<string, string> = {
-      age45Plus: 'Âge > 45 ans',
-      familyHistory: 'Antécédents familiaux',
-      obesity: 'Obésité',
-      smoking: 'Tabagisme',
-      sedentary: 'Sédentarité',
-      hypertension: 'Hypertension',
-      diabetes: 'Diabète',
-      highCholesterol: 'Cholestérol élevé',
-      heartDisease: 'Maladie cardiaque',
-      stroke: 'AVC',
-      physicalInactivity: 'Inactivité physique',
-      poorDiet: 'Alimentation déséquilibrée',
-    };
-
-    return Object.entries(answers).map(([key, value]) => ({
-      label: labels[key] || key,
-      value: value === true || value === 'true' || value === 'Oui' || value === 'Yes',
-    }));
-  }
 
   parseRiskFactors(testresult: string | undefined): { label: string; value: boolean }[] {
     if (!testresult) return [];
@@ -1210,4 +1293,50 @@ export class PatientDetailsComponent implements OnInit {
       return parts[0].charAt(0) + parts[1].charAt(0);
     }
     return name.charAt(0);
+  }
+
+  // Map awareness answer keys to French text
+  getAwarenessAnswerText(key: string | undefined, questionType: string): string {
+    if (!key) return 'Non renseigné';
+
+    const answerMappings: Record<string, string> = {
+      // General knowledge answers
+      'know': questionType.includes('hypertension_knowledge') ? 'Oui, ils savent ce que c\'est.' : 'Oui, je sais ce que c\'est.',
+      'know_little': questionType.includes('hypertension_knowledge') ? 'Oui, ils en savent un peu.' : 'Oui, j\'en sais un peu.',
+      'dont_know': questionType.includes('hypertension_knowledge') ? 'Non, ils ne savent rien.' : 'Non, je ne sais rien.',
+
+      // Symptom knowledge answers
+      'more_than_three': 'Oui, ils peuvent fournir plus de trois symptômes.',
+      'one_to_three': 'Oui, ils peuvent fournir un à trois symptômes.',
+      'none': 'Non, ils ne peuvent fournir aucun symptôme.',
+
+      // Action knowledge answers
+      'know_action': 'Oui, je sais quoi faire (contacter un agent de santé).',
+      'dont_know_action': 'Non, je ne sais pas.'
+    };
+
+    return answerMappings[key] || key;
+  }
+
+  // Get awareness answer icon class based on key
+  getAwarenessAnswerIconClass(key: string | undefined, questionType: string): string {
+    if (!key) return 'pi-question-circle text-gray-500';
+
+    if (questionType.includes('symptoms')) {
+      switch (key) {
+        case 'more_than_three': return 'pi-check-circle text-green-500';
+        case 'one_to_three': return 'pi-minus-circle text-yellow-500';
+        case 'none': return 'pi-times-circle text-red-500';
+        default: return 'pi-question-circle text-gray-500';
+      }
+    } else {
+      switch (key) {
+        case 'know': return 'pi-check-circle text-green-500';
+        case 'know_little': return 'pi-minus-circle text-yellow-500';
+        case 'know_action': return 'pi-check-circle text-green-500';
+        case 'dont_know':
+        case 'dont_know_action': return 'pi-times-circle text-red-500';
+        default: return 'pi-question-circle text-gray-500';
+      }
+    }
   }}

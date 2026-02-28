@@ -24,32 +24,6 @@
   <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
     <div class="flex items-center justify-between">
       <div>
-        <p class="text-sm text-gray-600 font-medium">Prédépistages</p>
-        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getPreScreeningsCount() }}</p>
-        <p class="text-xs text-orange-600 mt-1">{{ getPreScreeningHighRiskCount() }} à risque élevé</p>
-      </div>
-      <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-        <i class="pi pi-search text-purple-600 text-2xl"></i>
-      </div>
-    </div>
-  </div>
-
-  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm text-gray-600 font-medium">Sensibilisation</p>
-        <p class="text-3xl font-bold text-gray-900 mt-2">{{ getAwarenessCount() }}</p>
-        <p class="text-xs text-green-600 mt-1">{{ getGoodAwarenessCount() }} bonne connaissance</p>
-      </div>
-      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-        <i class="pi pi-lightbulb text-green-600 text-2xl"></i>
-      </div>
-    </div>
-  </div>
-
-  <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-    <div class="flex items-center justify-between">
-      <div>
         <p class="text-sm text-gray-600 font-medium">Dépistages HTA</p>
         <p class="text-3xl font-bold text-gray-900 mt-2">{{ getHTACount() }}</p>
         <p class="text-xs text-red-600 mt-1">{{ getHTAElevatedCount() }} tension élevée</p>
@@ -76,16 +50,8 @@
 
 <!-- Tabs -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-  <p-tabs value="0">
+  <p-tabs value="2">
     <p-tablist>
-      <p-tab value="0">
-        <i class="pi pi-search mr-2"></i>
-        Prédépistages ({{ getPreScreeningsCount() }})
-      </p-tab>
-      <p-tab value="1">
-        <i class="pi pi-lightbulb mr-2"></i>
-        Sensibilisation ({{ getAwarenessCount() }})
-      </p-tab>
       <p-tab value="2">
         <i class="pi pi-heart mr-2"></i>
         Dépistages HTA ({{ getHTACount() }})
@@ -95,261 +61,6 @@
         Dépistages Diabète ({{ getDiabeteCount() }})
       </p-tab>
     </p-tablist>
-
-    <!-- Tab 1: Prédépistages (RiskTests) -->
-    <p-tabpanel value="0">
-      <div class="p-4 border-b border-gray-200">
-        <div class="flex flex-col md:flex-row md:items-center gap-4">
-          <div class="flex-1">
-            <input
-              pInputText
-              type="text"
-              placeholder="Rechercher (patient, ACS, type)..."
-              class="w-full"
-              [(ngModel)]="searchTerm"
-              (input)="onSearchPreScreenings()"
-            />
-          </div>
-          <div class="flex gap-2">
-            <p-select
-              [options]="riskLevelOptions"
-              [(ngModel)]="selectedRiskLevel"
-              placeholder="Niveau de risque"
-              [showClear]="true"
-              styleClass="w-full md:w-44"
-              (onChange)="applyPreScreeningFilters()"
-            />
-            <p-button
-              icon="pi pi-filter-slash"
-              [text]="true"
-              severity="secondary"
-              pTooltip="Réinitialiser"
-              (onClick)="resetPreScreeningFilters()"
-            />
-          </div>
-        </div>
-      </div>
-
-      <p-table
-        [value]="filteredPreScreenings()"
-        [paginator]="true"
-        [rows]="10"
-        [rowsPerPageOptions]="[5, 10, 20]"
-        [loading]="loading()"
-        styleClass="p-datatable-sm"
-        [rowHover]="true"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th scope="col" class="px-4 py-3">Patient</th>
-            <th scope="col" class="px-4 py-3 hidden md:table-cell">Maladie</th>
-            <th scope="col" class="px-4 py-3">Niveau de risque</th>
-            <th scope="col" class="px-4 py-3 hidden lg:table-cell">ACS</th>
-            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Date</th>
-            <th scope="col" class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-ps>
-          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewPreScreening(ps)">
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
-                  [ngClass]="{
-                    'bg-blue-100 text-blue-700': ps.patientSex === 'M',
-                    'bg-pink-100 text-pink-700': ps.patientSex === 'F'
-                  }"
-                >
-                  {{ getPatientInitials(ps.patientName) }}
-                </div>
-                <div>
-                  <p class="font-semibold text-gray-900">{{ ps.patientName }}</p>
-                  <p class="text-sm text-gray-500">{{ ps.patientAge }} ans</p>
-                </div>
-              </div>
-            </td>
-            <td class="px-4 py-3 hidden md:table-cell">
-              <p-tag
-                [value]="ps.disease"
-                [severity]="ps.disease === 'Hypertension' ? 'danger' : 'warn'"
-              />
-            </td>
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2">
-                <p-tag
-                  [value]="ps.riskLevelLabel + ' (' + (ps.riskLevel || 0) + ')'"
-                  [severity]="getRiskLevelSeverity(ps.riskLevel)"
-                />
-              </div>
-            </td>
-            <td class="px-4 py-3 hidden lg:table-cell">
-              <span class="text-gray-700">{{ ps.workerName }}</span>
-            </td>
-            <td class="px-4 py-3 hidden lg:table-cell">
-              <span class="text-gray-700">{{ ps.createdAt | date:'shortDate' }}</span>
-            </td>
-            <td class="px-4 py-3" (click)="$event.stopPropagation()">
-              <div class="flex items-center justify-end gap-2">
-                <p-button
-                  icon="pi pi-eye"
-                  [text]="true"
-                  [rounded]="true"
-                  severity="info"
-                  pTooltip="Voir détails"
-                  (onClick)="viewPreScreening(ps)"
-                />
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="6" class="text-center py-12">
-              <div class="flex flex-col items-center gap-4">
-                <i class="pi pi-search text-gray-300 text-5xl"></i>
-                <p class="text-gray-500">Aucun prédépistage trouvé</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </p-tabpanel>
-
-    <!-- Tab 2: Sensibilisation (Awareness) -->
-    <p-tabpanel value="1">
-      <div class="p-4 border-b border-gray-200">
-        <div class="flex flex-col md:flex-row md:items-center gap-4">
-          <div class="flex-1">
-            <input
-              pInputText
-              type="text"
-              placeholder="Rechercher (patient, ACS)..."
-              class="w-full"
-              [(ngModel)]="searchTerm"
-              (input)="onSearchAwareness()"
-            />
-          </div>
-          <div class="flex gap-2">
-            <p-select
-              [options]="awarenessLevelOptions"
-              [(ngModel)]="selectedAwarenessLevel"
-              placeholder="Niveau de connaissance"
-              [showClear]="true"
-              styleClass="w-full md:w-44"
-              (onChange)="applyAwarenessFilters()"
-            />
-            <p-button
-              icon="pi pi-filter-slash"
-              [text]="true"
-              severity="secondary"
-              pTooltip="Réinitialiser"
-              (onClick)="resetAwarenessFilters()"
-            />
-          </div>
-        </div>
-      </div>
-
-      <p-table
-        [value]="filteredAwareness()"
-        [paginator]="true"
-        [rows]="10"
-        [rowsPerPageOptions]="[5, 10, 20]"
-        [loading]="loading()"
-        styleClass="p-datatable-sm"
-        [rowHover]="true"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th scope="col" class="px-4 py-3">Patient</th>
-            <th scope="col" class="px-4 py-3 hidden md:table-cell">Connaissance HTA</th>
-            <th scope="col" class="px-4 py-3 hidden md:table-cell">Connaissance Diabète</th>
-            <th scope="col" class="px-4 py-3">Niveau global</th>
-            <th scope="col" class="px-4 py-3 hidden lg:table-cell">ACS</th>
-            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Date</th>
-            <th scope="col" class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-aw>
-          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewAwareness(aw)">
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
-                  [ngClass]="{
-                    'bg-blue-100 text-blue-700': aw.patientSex === 'M',
-                    'bg-pink-100 text-pink-700': aw.patientSex === 'F'
-                  }"
-                >
-                  {{ getPatientInitials(aw.patientName) }}
-                </div>
-                <div>
-                  <p class="font-semibold text-gray-900">{{ aw.patientName }}</p>
-                  <p class="text-sm text-gray-500">{{ aw.patientAge }} ans</p>
-                </div>
-              </div>
-            </td>
-            <td class="px-4 py-3 hidden md:table-cell">
-              <div class="flex items-center">
-                <div class="w-4 h-4 rounded-full mr-2"
-                     [ngClass]="{
-                       'bg-green-500': aw.hypertensionKnowledgeScore >= 2,
-                       'bg-yellow-500': aw.hypertensionKnowledgeScore === 1,
-                       'bg-red-500': (aw.hypertensionKnowledgeScore || 0) === 0
-                     }"></div>
-                <span class="text-sm">{{ aw.hypertensionKnowledgeScore || 0 }}/3</span>
-              </div>
-            </td>
-            <td class="px-4 py-3 hidden md:table-cell">
-              <div class="flex items-center">
-                <div class="w-4 h-4 rounded-full mr-2"
-                     [ngClass]="{
-                       'bg-green-500': aw.diabetesKnowledgeScore >= 2,
-                       'bg-yellow-500': aw.diabetesKnowledgeScore === 1,
-                       'bg-red-500': (aw.diabetesKnowledgeScore || 0) === 0
-                     }"></div>
-                <span class="text-sm">{{ aw.diabetesKnowledgeScore || 0 }}/3</span>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <p-tag
-                [value]="getAwarenessLevelLabel(aw.overallKnowledgeLevel)"
-                [severity]="getAwarenessLevelSeverity(aw.overallKnowledgeLevel)"
-              />
-            </td>
-            <td class="px-4 py-3 hidden lg:table-cell">
-              <span class="text-gray-700">{{ aw.workerName }}</span>
-            </td>
-            <td class="px-4 py-3 hidden lg:table-cell">
-              <span class="text-gray-700">{{ aw.createdAt | date:'shortDate' }}</span>
-            </td>
-            <td class="px-4 py-3 text-right">
-              <p-button
-                icon="pi pi-eye"
-                [text]="true"
-                severity="secondary"
-                size="small"
-                pTooltip="Voir détails"
-                (onClick)="$event.stopPropagation(); viewAwareness(aw)"
-              />
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="7" class="text-center py-8 text-gray-500">
-              <div class="flex flex-col items-center gap-2">
-                <i class="pi pi-lightbulb text-2xl"></i>
-                <p>Aucune donnée de sensibilisation trouvée</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </p-tabpanel>
 
     <p-tabpanel value="2">
       <div class="p-4 border-b border-gray-200">
@@ -618,267 +329,6 @@
   </p-tabs>
 </div>
 
-<!-- Modal: Détails Prédépistage (PreScreening) -->
-<p-dialog
-  header="Détails du prédépistage"
-  [(visible)]="showPreScreeningModal"
-  [modal]="true"
-  [style]="{ width: '600px' }"
-  [draggable]="false"
-  [resizable]="false"
-  (onHide)="closePreScreeningModal()"
->
-  <div *ngIf="selectedPreScreening" class="space-y-6">
-    <!-- Patient Info -->
-    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-      <div
-        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
-        [ngClass]="{
-          'bg-blue-100 text-blue-700': selectedPreScreening.patientSex === 'M',
-          'bg-pink-100 text-pink-700': selectedPreScreening.patientSex === 'F'
-        }"
-      >
-        {{ getPatientInitials(selectedPreScreening.patientName) }}
-      </div>
-      <div class="flex-1">
-        <h3 class="text-lg font-semibold text-gray-900">{{ selectedPreScreening.patientName }}</h3>
-        <p class="text-gray-500">{{ selectedPreScreening.patientAge }} ans • {{ selectedPreScreening.patientSex === 'M' ? 'Homme' : 'Femme' }}</p>
-      </div>
-      <p-tag
-        [value]="selectedPreScreening.riskLevelLabel + ' (' + (selectedPreScreening.riskLevel || 0) + ')'"
-        [severity]="getRiskLevelSeverity(selectedPreScreening.riskLevel)"
-        styleClass="text-sm"
-      />
-    </div>
-
-    <!-- Test Info -->
-    <div class="grid grid-cols-2 gap-4">
-      <div class="p-4 bg-purple-50 rounded-lg">
-        <p class="text-sm text-purple-600 font-medium">Maladie ciblée</p>
-        <p class="text-lg font-semibold text-purple-900">{{ selectedPreScreening.disease }}</p>
-      </div>
-      <div class="p-4 bg-gray-50 rounded-lg">
-        <p class="text-sm text-gray-600 font-medium">Date du questionnaire</p>
-        <p class="text-lg font-semibold text-gray-900">{{ selectedPreScreening.createdAt | date:'short' }}</p>
-      </div>
-    </div>
-
-    <!-- Risk Factors -->
-    <div>
-      <h4 class="text-sm font-semibold text-gray-700 mb-3">Facteurs de risque évalués</h4>
-      <div class="grid grid-cols-2 gap-2">
-        <div
-          *ngFor="let factor of parsePreScreeningAnswers(selectedPreScreening.answers)"
-          class="p-2 rounded-lg border text-sm"
-          [ngClass]="factor.value ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'"
-        >
-          <div class="flex items-center justify-between">
-            <span [ngClass]="factor.value ? 'text-red-800' : 'text-green-800'">{{ factor.label }}</span>
-            <i
-              class="pi text-xs"
-              [ngClass]="factor.value ? 'pi-times text-red-600' : 'pi-check text-green-600'"
-            ></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <p-divider />
-
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>{{ selectedPreScreening.workerName }}</strong></span>
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closePreScreeningModal()" />
-  </ng-template>
-</p-dialog>
-
-<!-- Modal: Détails Sensibilisation (Awareness) -->
-<p-dialog
-  header="Détails de la sensibilisation"
-  [(visible)]="showAwarenessModal"
-  [modal]="true"
-  [style]="{ width: '700px' }"
-  [draggable]="false"
-  [resizable]="false"
-  (onHide)="closeAwarenessModal()"
->
-  <div *ngIf="selectedAwareness" class="space-y-6">
-    <!-- Patient Info -->
-    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-      <div
-        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
-        [ngClass]="{
-          'bg-blue-100 text-blue-700': selectedAwareness.patientSex === 'M',
-          'bg-pink-100 text-pink-700': selectedAwareness.patientSex === 'F'
-        }"
-      >
-        {{ getPatientInitials(selectedAwareness.patientName) }}
-      </div>
-      <div class="flex-1">
-        <h3 class="text-lg font-semibold text-gray-900">{{ selectedAwareness.patientName }}</h3>
-        <p class="text-gray-500">{{ selectedAwareness.patientAge }} ans • {{ selectedAwareness.patientSex === 'M' ? 'Homme' : 'Femme' }}</p>
-      </div>
-      <p-tag
-        [value]="getAwarenessLevelLabel(selectedAwareness.overallKnowledgeLevel)"
-        [severity]="getAwarenessLevelSeverity(selectedAwareness.overallKnowledgeLevel)"
-        styleClass="text-sm"
-      />
-    </div>
-
-    <!-- Knowledge Summary -->
-    <div class="grid grid-cols-3 gap-4">
-      <div class="p-4 bg-blue-50 rounded-lg text-center">
-        <p class="text-sm text-blue-600 font-medium">Score HTA</p>
-        <p class="text-2xl font-bold text-blue-900">{{ selectedAwareness.hypertensionKnowledgeScore || 0 }}/3</p>
-      </div>
-      <div class="p-4 bg-amber-50 rounded-lg text-center">
-        <p class="text-sm text-amber-600 font-medium">Score Diabète</p>
-        <p class="text-2xl font-bold text-amber-900">{{ selectedAwareness.diabetesKnowledgeScore || 0 }}/3</p>
-      </div>
-      <div class="p-4 bg-gray-50 rounded-lg text-center">
-        <p class="text-sm text-gray-600 font-medium">Niveau Global</p>
-        <p class="text-lg font-semibold text-gray-900 capitalize">{{ selectedAwareness.overallKnowledgeLevel }}</p>
-      </div>
-    </div>
-
-    <!-- Knowledge Details -->
-    <div class="space-y-4">
-      <div>
-        <h4 class="text-sm font-semibold text-gray-700 mb-3">Connaissances sur l'Hypertension</h4>
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span>Connaissance générale:</span>
-            <span class="font-medium">{{ selectedAwareness.hypertension_knowledge }}</span>
-          </div>
-          <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span>Connaissance des symptômes:</span>
-            <span class="font-medium">{{ selectedAwareness.hypertension_symptoms }}</span>
-          </div>
-          <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span>Actions à prendre:</span>
-            <span class="font-medium">{{ selectedAwareness.hypertension_action }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h4 class="text-sm font-semibold text-gray-700 mb-3">Connaissances sur le Diabète</h4>
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span>Connaissance générale:</span>
-            <span class="font-medium">{{ selectedAwareness.diabetes_knowledge }}</span>
-          </div>
-          <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span>Connaissance des signes:</span>
-            <span class="font-medium">{{ selectedAwareness.diabetes_signs }}</span>
-          </div>
-          <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span>Actions à prendre:</span>
-            <span class="font-medium">{{ selectedAwareness.diabetes_action }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <p-divider />
-
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>{{ selectedAwareness.workerName }}</strong></span>
-      <span class="ml-auto text-sm">{{ selectedAwareness.createdAt | date:'short' }}</span>
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeAwarenessModal()" />
-  </ng-template>
-</p-dialog>
-
-<!-- Modal: Détails Prédépistage (RiskTest) - Deprecated but kept for compatibility -->
-<p-dialog
-  header="Détails du prédépistage"
-  [(visible)]="showRiskTestModal"
-  [modal]="true"
-  [style]="{ width: '600px' }"
-  [draggable]="false"
-  [resizable]="false"
-  (onHide)="closeRiskTestModal()"
->
-  <div *ngIf="selectedRiskTest" class="space-y-6">
-    <!-- Patient Info -->
-    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-      <div
-        class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
-        [ngClass]="{
-          'bg-blue-100 text-blue-700': selectedRiskTest.patientSex === 'M',
-          'bg-pink-100 text-pink-700': selectedRiskTest.patientSex === 'F'
-        }"
-      >
-        {{ getPatientInitials(selectedRiskTest.patientName) }}
-      </div>
-      <div class="flex-1">
-        <h3 class="text-lg font-semibold text-gray-900">{{ selectedRiskTest.patientName }}</h3>
-        <p class="text-gray-500">{{ selectedRiskTest.patientAge }} ans • {{ selectedRiskTest.patientSex === 'M' ? 'Homme' : 'Femme' }}</p>
-      </div>
-      <p-tag
-        [value]="getRiskLevelLabel(selectedRiskTest.risklevel) + ' (' + selectedRiskTest.risklevel + ')'"
-        [severity]="getRiskLevelSeverity(selectedRiskTest.risklevel)"
-        styleClass="text-sm"
-      />
-    </div>
-
-    <!-- Test Info -->
-    <div class="grid grid-cols-2 gap-4">
-      <div class="p-4 bg-purple-50 rounded-lg">
-        <p class="text-sm text-purple-600 font-medium">Type de test</p>
-        <p class="text-lg font-semibold text-purple-900">{{ selectedRiskTest.testtype }}</p>
-      </div>
-      <div class="p-4 bg-gray-50 rounded-lg">
-        <p class="text-sm text-gray-600 font-medium">Date du test</p>
-        <p class="text-lg font-semibold text-gray-900">{{ selectedRiskTest.testdate }}</p>
-      </div>
-    </div>
-
-    <!-- Risk Factors -->
-    <div>
-      <h4 class="text-sm font-semibold text-gray-700 mb-3">Facteurs de risque évalués</h4>
-      <div class="grid grid-cols-2 gap-2">
-        <div
-          *ngFor="let factor of parseRiskFactors(selectedRiskTest.testresult)"
-          class="flex items-center gap-2 p-3 rounded-lg"
-          [ngClass]="factor.value ? 'bg-red-50' : 'bg-green-50'"
-        >
-          <i
-            class="pi"
-            [ngClass]="{
-              'pi-times-circle text-red-500': factor.value,
-              'pi-check-circle text-green-500': !factor.value
-            }"
-          ></i>
-          <span [ngClass]="factor.value ? 'text-red-700' : 'text-green-700'">{{ factor.label }}</span>
-        </div>
-      </div>
-    </div>
-
-    <p-divider />
-
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>{{ selectedRiskTest.workerName }}</strong></span>
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closeRiskTestModal()" />
-  </ng-template>
-</p-dialog>
 
 <!-- Modal: Détails Dépistage HTA -->
 <p-dialog
@@ -922,7 +372,12 @@
         styleClass="text-lg px-4 py-2"
       />
     </div>
-
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>{{ selectedScreeningHTA.workerName }}</strong></span>
+    </div>
+    <p-divider />
     <!-- Measurements -->
     <div>
       <h4 class="text-sm font-semibold text-gray-700 mb-3">Mesures détaillées</h4>
@@ -956,13 +411,6 @@
       </div>
     </div>
 
-    <p-divider />
-
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>{{ selectedScreeningHTA.workerName }}</strong></span>
-    </div>
   </div>
 
   <ng-template pTemplate="footer">
@@ -1012,7 +460,12 @@
         styleClass="text-lg px-4 py-2"
       />
     </div>
-
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>{{ selectedScreeningDiabete.workerName }}</strong></span>
+    </div>
+    <p-divider />
     <!-- Test Conditions -->
     <div class="grid grid-cols-3 gap-4">
       <div class="p-4 bg-blue-50 rounded-lg text-center">
@@ -1051,13 +504,9 @@
       </div>
     </div>
 
-    <p-divider />
 
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>{{ selectedScreeningDiabete.workerName }}</strong></span>
-    </div>
+
+
   </div>
 
   <ng-template pTemplate="footer">

@@ -1,30 +1,251 @@
-<div class="space-y-6">
+<div class="space-y-6 p-4">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl md:text-3xl font-bold text-gray-900">Tableau de bord</h1>
 		<span class="text-sm text-gray-500" *ngIf="loading">Chargement…</span>
 	</div>
 
-	<!-- KPIs -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-		<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-			<p class="text-sm text-gray-600">Ménages</p>
-			<p class="text-3xl font-bold text-gray-900 mt-1">{{ totalHouseholds }}</p>
+	<!-- Main KPIs - Based on kpis.md -->
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+		<!-- KPI 1: Early Detection Rate -->
+		<p-card>
+			<ng-template pTemplate="header">
+				<div class="flex items-center justify-between p-4 pb-2">
+					<h3 class="text-lg font-semibold text-gray-800">Détection Précoce</h3>
+					<p-tag
+						[value]="earlyDetectionRate.toFixed(1) + '%'"
+						[severity]="getKpiSeverity(earlyDetectionRate)">
+					</p-tag>
+				</div>
+			</ng-template>
+			<div class="p-4 pt-0">
+				<p class="text-sm text-gray-600 mb-3">
+					Pourcentage de personnes dépistées et détectées précocement avec HTA ou diabète
+				</p>
+				<p-progressBar
+					[value]="earlyDetectionRate.toFixed(1)"
+					[style]="{'height': '8px'}"
+					[styleClass]="'mb-2'">
+				</p-progressBar>
+				<div class="text-sm text-gray-500">
+					{{ (preScreeningHighRisk) }} détecté(e)s / {{ totalPatients }} patients
+				</div>
+			</div>
+		</p-card>
+
+		<!-- KPI 2: Linkage to Care Rate -->
+		<p-card>
+			<ng-template pTemplate="header">
+				<div class="flex items-center justify-between p-4 pb-2">
+					<h3 class="text-lg font-semibold text-gray-800">Liaison aux Soins</h3>
+					<p-tag
+						[value]="linkageToCareRate.toFixed(1) + '%'"
+						[severity]="getKpiSeverity(linkageToCareRate)">
+					</p-tag>
+				</div>
+			</ng-template>
+			<div class="p-4 pt-0">
+				<p class="text-sm text-gray-600 mb-3">
+					Pourcentage de personnes détectées qui sont reliées aux soins de santé
+				</p>
+				<p-progressBar
+					[value]="linkageToCareRate.toFixed(1)"
+					[style]="{'height': '8px'}"
+					[styleClass]="'mb-2'">
+				</p-progressBar>
+				<div class="text-sm text-gray-500">
+					{{ totalReferred }} référé(e)s / {{ (htaElevated + diabetesElevated + preScreeningHighRisk) }} détecté(e)s
+				</div>
+			</div>
+		</p-card>
+
+		<!-- KPI 3: Stabilized Conditions Rate -->
+		<p-card>
+			<ng-template pTemplate="header">
+				<div class="flex items-center justify-between p-4 pb-2">
+					<h3 class="text-lg font-semibold text-gray-800">Conditions Stabilisées</h3>
+					<p-tag
+						[value]="stabilizedConditionsRate.toFixed(1) + '%'"
+						[severity]="getKpiSeverity(stabilizedConditionsRate)">
+					</p-tag>
+				</div>
+			</ng-template>
+			<div class="p-4 pt-0">
+				<p class="text-sm text-gray-600 mb-3">
+					Pourcentage de patients diagnostiqués avec des conditions sous contrôle
+				</p>
+				<p-progressBar
+					[value]="stabilizedConditionsRate.toFixed(1)"
+					[style]="{'height': '8px'}"
+					[styleClass]="'mb-2'">
+				</p-progressBar>
+				<div class="text-sm text-gray-500">
+					Conditions contrôlées sur diagnostics élevés
+				</div>
+			</div>
+		</p-card>
+	</div>
+
+	<!-- Overview Statistics -->
+	<div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+		<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+			<p class="text-xs text-gray-600 mb-1">Ménages</p>
+			<p class="text-2xl font-bold text-gray-900">{{ totalHouseholds }}</p>
 		</div>
-		<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-			<p class="text-sm text-gray-600">Patients</p>
-			<p class="text-3xl font-bold text-gray-900 mt-1">{{ totalPatients }}</p>
+		<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+			<p class="text-xs text-gray-600 mb-1">Patients</p>
+			<p class="text-2xl font-bold text-gray-900">{{ totalPatients }}</p>
 		</div>
-		<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-			<p class="text-sm text-gray-600">Prédépistages à risque</p>
-			<p class="text-3xl font-bold text-amber-700 mt-1">{{ highRiskCount }}</p>
+		<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+			<p class="text-xs text-gray-600 mb-1">Total Dépistés</p>
+			<p class="text-2xl font-bold text-blue-600">{{ totalScreened }}</p>
 		</div>
-		<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-			<p class="text-sm text-gray-600">HTA élevées</p>
-			<p class="text-3xl font-bold text-red-700 mt-1">{{ htaElevated }}</p>
+		<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+			<p class="text-xs text-gray-600 mb-1">HTA Élevées</p>
+			<p class="text-2xl font-bold text-red-600">{{ htaElevated }}</p>
 		</div>
-		<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-			<p class="text-sm text-gray-600">Glycémie élevée</p>
-			<p class="text-3xl font-bold text-red-700 mt-1">{{ diabeteElevated }}</p>
+		<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+			<p class="text-xs text-gray-600 mb-1">Diabète Élevé</p>
+			<p class="text-2xl font-bold text-red-600">{{ diabetesElevated }}</p>
+		</div>
+		<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+			<p class="text-xs text-gray-600 mb-1">Sensibilisation</p>
+			<p class="text-2xl font-bold text-green-600">{{ awarenessCompleted }}</p>
 		</div>
 	</div>
+
+	<!-- Charts Section -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+		<!-- Screening Overview Chart -->
+		<p-card>
+			<ng-template pTemplate="header">
+				<div class="p-4 pb-2">
+					<h3 class="text-lg font-semibold text-gray-800">Aperçu des Dépistages</h3>
+				</div>
+			</ng-template>
+			<div class="p-4 pt-0" style="height: 300px;">
+				<p-chart
+					type="doughnut"
+					[data]="screeningChartData"
+					[options]="chartOptions"
+					[style]="{'height': '100%'}">
+				</p-chart>
+			</div>
+		</p-card>
+
+		<!-- Main KPIs Chart -->
+		<p-card>
+			<ng-template pTemplate="header">
+				<div class="p-4 pb-2">
+					<h3 class="text-lg font-semibold text-gray-800">Indicateurs Clés de Performance</h3>
+				</div>
+			</ng-template>
+			<div class="p-4 pt-0" style="height: 300px;">
+				<!-- <p-chart
+					type="bar"
+					[data]="kpiChartData"
+					[options]="{
+						...chartOptions,
+						scales: {
+							y: {
+								beginAtZero: true,
+								max: 100,
+								ticks: {
+									callback: function(value: any) { return value + '%'; }
+								}
+							}
+						},
+						plugins: {
+							...chartOptions.plugins,
+							tooltip: {
+								callbacks: {
+									label: function(context: any) {
+										return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+									}
+								}
+							}
+						}
+					}"
+					[style]="{'height': '100%'}">
+				</p-chart> -->
+			</div>
+		</p-card>
+	</div>
+
+	<!-- Detailed Breakdown -->
+	<p-card class="mt-6">
+		<ng-template pTemplate="header">
+			<div class="p-4 pb-2">
+				<h3 class="text-lg font-semibold text-gray-800">Détails par Condition</h3>
+			</div>
+		</ng-template>
+		<div class="p-4 pt-0">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<!-- HTA Details -->
+				<div class="space-y-3">
+					<h4 class="font-medium text-gray-900 flex items-center">
+						<i class="pi pi-heart text-red-500 mr-2"></i>
+						Hypertension Artérielle
+					</h4>
+					<div class="space-y-2 text-sm">
+						<div class="flex justify-between">
+							<span class="text-gray-600">Patients dépistés:</span>
+							<span class="font-medium">{{ htaScreened }}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-gray-600">Cas élevés détectés:</span>
+							<span class="font-medium text-red-600">{{ htaElevated }}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-gray-600">Taux de détection:</span>
+							<span class="font-medium" [ngClass]="getKpiColor(htaScreened > 0 ? (htaElevated / htaScreened) * 100 : 0)">
+								{{ htaScreened > 0 ? ((htaElevated / htaScreened) * 100).toFixed(1) : '0' }}%
+							</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Diabetes Details -->
+				<div class="space-y-3">
+					<h4 class="font-medium text-gray-900 flex items-center">
+						<i class="pi pi-chart-line text-blue-500 mr-2"></i>
+						Diabète
+					</h4>
+					<div class="space-y-2 text-sm">
+						<div class="flex justify-between">
+							<span class="text-gray-600">Patients dépistés:</span>
+							<span class="font-medium">{{ diabetesScreened }}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-gray-600">Cas élevés détectés:</span>
+							<span class="font-medium text-red-600">{{ diabetesElevated }}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-gray-600">Taux de détection:</span>
+							<span class="font-medium" [ngClass]="getKpiColor(diabetesScreened > 0 ? (diabetesElevated / diabetesScreened) * 100 : 0)">
+								{{ diabetesScreened > 0 ? ((diabetesElevated / diabetesScreened) * 100).toFixed(1) : '0' }}%
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<p-divider></p-divider>
+
+			<!-- Additional Metrics -->
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+				<div class="text-center">
+					<div class="text-2xl font-bold text-purple-600">{{ preScreeningHighRisk }}</div>
+					<div class="text-sm text-gray-600">Prédépistages à Haut Risque</div>
+				</div>
+				<div class="text-center">
+					<div class="text-2xl font-bold text-blue-600">{{ totalFollowedUp }}</div>
+					<div class="text-sm text-gray-600">Patients en Suivi</div>
+				</div>
+				<div class="text-center">
+					<div class="text-2xl font-bold text-green-600">{{ awarenessCompleted }}</div>
+					<div class="text-sm text-gray-600">Évaluations de Sensibilisation</div>
+				</div>
+			</div>
+		</div>
+	</p-card>
 </div>

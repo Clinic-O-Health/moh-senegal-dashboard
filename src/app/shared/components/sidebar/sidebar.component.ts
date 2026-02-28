@@ -24,7 +24,8 @@ export class SidebarComponent {
     { label: 'Patients', icon: 'pi pi-users', route: '/admin/patients' },
     { label: 'Foyers', icon: 'pi pi-home', route: '/admin/households' },
     { label: 'Personnel', icon: 'pi pi-id-card', route: '/admin/workers' },
-    { label: 'Consultations', icon: 'pi pi-building', route: '/admin/screenings' },
+    { label: 'Dépistages ', icon: 'pi pi-building', route: '/admin/screenings' },
+    { label: 'Pré-dépistages ', icon: 'pi pi-building', route: '/admin/pre-screenings' },
   ];
 
   get sidebarClasses(): string {

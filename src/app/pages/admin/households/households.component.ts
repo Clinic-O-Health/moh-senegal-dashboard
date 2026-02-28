@@ -73,7 +73,6 @@ export class HouseholdsComponent implements OnInit {
                 filter: { householdid: { _eq: household.id } },
                 fields: [
                   'id',
-                  'filledScreeningForm',
                   'workerId.id',
                   'workerId.first_name',
                   'workerId.last_name'
@@ -82,7 +81,8 @@ export class HouseholdsComponent implements OnInit {
             ) as HouseholdMember[];
 
             const totalMembers = members.length;
-            const membersScreened = members.filter(m => m.filledScreeningForm).length;
+            const membersScreened = 0;
+            // const membersScreened = members.filter(m => m.filledScreeningForm).length;
 
             // Récupérer le nom de l'ACS du premier membre qui en a un
             let workerName = '';

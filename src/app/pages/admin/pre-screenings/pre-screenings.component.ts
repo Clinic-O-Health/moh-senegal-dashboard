@@ -18,7 +18,8 @@ import { DividerModule } from 'primeng/divider';
 import { RiskTest, ScreeningHTA, ScreeningDiabete, PreScreeningAnswer, Awareness } from '@core/models/household';
 import { DirectusService } from '@core/services/directus.service';
 import { readItems } from '@directus/sdk';
-
+import * as factors from '@core/constants/factors.json';
+import * as awareness from '@core/constants/awareness.json';
 interface ScreeningWithPatient {
   patientName?: string;
   patientAge?: number;
@@ -30,8 +31,9 @@ export type RiskTestWithPatient = RiskTest & ScreeningWithPatient;
 export type ScreeningHTAWithPatient = ScreeningHTA & ScreeningWithPatient;
 export type ScreeningDiabeteWithPatient = ScreeningDiabete & ScreeningWithPatient;
 
+
 @Component({
-  selector: 'app-screenings',
+  selector: 'app-pre-screenings',
   standalone: true,
   imports: [
     CommonModule,
@@ -48,12 +50,11 @@ export type ScreeningDiabeteWithPatient = ScreeningDiabete & ScreeningWithPatien
     CardModule,
     DividerModule,
   ],
-  templateUrl: './screenings.component.html',
-  styleUrl: './screenings.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './pre-screenings.component.html',
+  styleUrl: './pre-screenings.component.scss',
 })
-export class ScreeningsComponent implements OnInit {
-  // Data
+export class PreScreeningsComponent {
+// Data
   preScreenings = signal<PreScreeningAnswer[]>([]);
   awarenessData = signal<Awareness[]>([]);
   screeningsHTA = signal<ScreeningHTAWithPatient[]>([]);
@@ -119,39 +120,38 @@ export class ScreeningsComponent implements OnInit {
   async loadData(): Promise<void> {
     this.loading.set(true);
     try {
-      const [htaRaw, diabeteRaw] = await Promise.all([
-
+      const [preScreeningRaw, awarenessRaw] = await Promise.all([
         this.directusService.directus.request(
-          readItems('screening', {
-            filter: { type: { _eq: 'Hypertension' } },
+          readItems('prescreeninganswers', {
             fields: [
               '*',
-              'patientid.id',
-              'patientid.firstname',
-              'patientid.lastname',
-              'patientid.dateofbirth',
-              'patientid.gender',
-              'workerid.first_name',
-              'workerid.last_name',
-            ],
-            sort: ['-createdat'],
-          })
-        ),
-        this.directusService.directus.request(
-          readItems('screeningdiabete', {
-            fields: [
-              '*',
-              'patientid.id',
-              'patientid.firstname',
-              'patientid.lastname',
-              'patientid.dateofbirth',
-              'patientid.gender',
+              'householdMemberId.id',
+              'householdMemberId.firstname',
+              'householdMemberId.lastname',
+              'householdMemberId.dateofbirth',
+              'householdMemberId.gender',
               'workerId.first_name',
               'workerId.last_name',
             ],
-            sort: ['-createdat'],
+            sort: ['-createdAt'],
           })
         ),
+        this.directusService.directus.request(
+          readItems('awareness', {
+            fields: [
+              '*',
+              'householdMemberId.id',
+              'householdMemberId.firstname',
+              'householdMemberId.lastname',
+              'householdMemberId.dateofbirth',
+              'householdMemberId.gender',
+              'workerId.first_name',
+              'workerId.last_name',
+            ],
+            sort: ['-createdAt'],
+          })
+        ),
+
       ]);
 
       const mapSex = (gender?: string): 'M' | 'F' | undefined => {
@@ -196,22 +196,25 @@ export class ScreeningsComponent implements OnInit {
         let diabetesScore = 0;
 
         // HTA Knowledge scoring
-        if (awareness.hypertension_knowledge?.includes('savent ce que c\'est') ||
-            awareness.hypertension_knowledge?.includes('know what it is')) htaScore += 1;
-        if (awareness.hypertension_symptoms?.includes('plus de trois') ||
-            awareness.hypertension_symptoms?.includes('more than three')) htaScore += 1;
-        if (awareness.hypertension_action?.includes('sais quoi faire') ||
-            awareness.hypertension_action?.includes('know what to do')) htaScore += 1;
+        if (awareness.hypertension_knowledge === 'know') htaScore += 1;
+        else if (awareness.hypertension_knowledge === 'know_little') htaScore += 0.5;
+
+        if (awareness.hypertension_symptoms === 'more_than_three') htaScore += 1;
+        else if (awareness.hypertension_symptoms === 'one_to_three') htaScore += 0.5;
+
+        if (awareness.hypertension_action === 'know_action') htaScore += 1;
 
         // Diabetes Knowledge scoring
-        if (awareness.diabetes_knowledge?.includes('sais ce que c\'est') ||
-            awareness.diabetes_knowledge?.includes('know what it is')) diabetesScore += 1;
-        if (awareness.diabetes_signs?.includes('sais ce que c\'est') ||
-            awareness.diabetes_signs?.includes('know what it is')) diabetesScore += 1;
-        if (awareness.diabetes_action?.includes('sais quoi faire') ||
-            awareness.diabetes_action?.includes('know what to do')) diabetesScore += 1;
+        if (awareness.diabetes_knowledge === 'know') diabetesScore += 1;
+        else if (awareness.diabetes_knowledge === 'know_little') diabetesScore += 0.5;
 
-        const avgScore = (htaScore + diabetesScore) / 6;
+        if (awareness.diabetes_signs === 'know') diabetesScore += 1;
+        else if (awareness.diabetes_signs === 'know_little') diabetesScore += 0.5;
+
+        if (awareness.diabetes_action === 'know_action') diabetesScore += 1;
+
+        const maxScore = 3; // Maximum score per category (hypertension or diabetes)
+        const avgScore = ((htaScore / maxScore) + (diabetesScore / maxScore)) / 2;
         let overall: 'bas' | 'moyen' | 'bon';
         if (avgScore < 0.33) overall = 'bas';
         else if (avgScore < 0.67) overall = 'moyen';
@@ -220,29 +223,42 @@ export class ScreeningsComponent implements OnInit {
         return { hypertension: htaScore, diabetes: diabetesScore, overall };
       };
 
+      // Map prescreening data
+      const preScreeningData: PreScreeningAnswer[] = (preScreeningRaw as any[]).map((ps) => {
+        const risk = calculateRiskLevel(ps.answers);
+        return {
+          ...ps,
+          patientName: [ps.householdMemberId?.firstname, ps.householdMemberId?.lastname].filter(Boolean).join(' '),
+          patientAge: calcAge(ps.householdMemberId?.dateofbirth),
+          patientSex: mapSex(ps.householdMemberId?.gender),
+          workerName: [ps.workerId?.first_name, ps.workerId?.last_name].filter(Boolean).join(' '),
+          riskLevel: risk.level,
+          riskLevelLabel: risk.label,
+        };
+      });
 
+      // Map awareness data
+      const awarenessData: Awareness[] = (awarenessRaw as any[]).map((aw) => {
+        const knowledge = calculateKnowledgeScore(aw);
+        return {
+          ...aw,
+          patientName: [aw.householdMemberId?.firstname, aw.householdMemberId?.lastname].filter(Boolean).join(' '),
+          patientAge: calcAge(aw.householdMemberId?.dateofbirth),
+          patientSex: mapSex(aw.householdMemberId?.gender),
+          workerName: [aw.workerId?.first_name, aw.workerId?.last_name].filter(Boolean).join(' '),
+          hypertensionKnowledgeScore: knowledge.hypertension,
+          diabetesKnowledgeScore: knowledge.diabetes,
+          overallKnowledgeLevel: knowledge.overall,
+        };
+      });
 
-      const screeningsHTAData: ScreeningHTAWithPatient[] = (htaRaw as any[]).map((s) => ({
-        ...s,
-        patientName: [s.patientid?.firstname, s.patientid?.lastname].filter(Boolean).join(' '),
-        patientAge: calcAge(s.patientid?.dateofbirth),
-        patientSex: mapSex(s.patientid?.gender),
-        workerName: [s.workerid?.first_name, s.workerid?.last_name].filter(Boolean).join(' '),
-      }));
+      // Set new data
+      this.preScreenings.set(preScreeningData);
+      this.awarenessData.set(awarenessData);
 
-      const screeningsDiabeteData: ScreeningDiabeteWithPatient[] = (diabeteRaw as any[]).map((s) => ({
-        ...s,
-        patientName: [s.patientid?.firstname, s.patientid?.lastname].filter(Boolean).join(' '),
-        patientAge: calcAge(s.patientid?.dateofbirth),
-        patientSex: mapSex(s.patientid?.gender),
-        workerName: [s.workerId?.first_name, s.workerId?.last_name].filter(Boolean).join(' '),
-      }));
-
-      this.screeningsHTA.set(screeningsHTAData);
-      this.screeningsDiabete.set(screeningsDiabeteData);
-
-      this.filteredScreeningsHTA.set(screeningsHTAData);
-      this.filteredScreeningsDiabete.set(screeningsDiabeteData);
+      // Set filtered data
+      this.filteredPreScreenings.set(preScreeningData);
+      this.filteredAwareness.set(awarenessData);
 
       // Keep legacy for compatibility during transition
       this.riskTests.set([]);
@@ -505,27 +521,16 @@ export class ScreeningsComponent implements OnInit {
   }
 
   // Parse prescreening answers from JSON
-  parsePreScreeningAnswers(answers: any): { label: string; value: boolean }[] {
+  parsePreScreeningAnswers(answers: Record<string, string>): { label: string; value: boolean; answer: any }[] {
     if (!answers || typeof answers !== 'object') return [];
 
-    const labels: Record<string, string> = {
-      age45Plus: 'Âge > 45 ans',
-      familyHistory: 'Antécédents familiaux',
-      obesity: 'Obésité',
-      smoking: 'Tabagisme',
-      sedentary: 'Sédentarité',
-      hypertension: 'Hypertension',
-      diabetes: 'Diabète',
-      highCholesterol: 'Cholestérol élevé',
-      heartDisease: 'Maladie cardiaque',
-      stroke: 'AVC',
-      physicalInactivity: 'Inactivité physique',
-      poorDiet: 'Alimentation déséquilibrée',
-    };
+    const labels: Record<string, string> = factors.factors;
+    const answersMap: Record<string, string> = factors.answers;
 
     return Object.entries(answers).map(([key, value]) => ({
       label: labels[key] || key,
-      value: value === true || value === 'true' || value === 'Oui' || value === 'Yes',
+      value: answersMap[value]?.includes('Oui') || false,
+      answer: answersMap[value],
     }));
   }
 
@@ -577,6 +582,29 @@ export class ScreeningsComponent implements OnInit {
       return parts[0].charAt(0) + parts[1].charAt(0);
     }
     return name.charAt(0);
+  }
+
+  // Map awareness answer keys to French text
+  getAwarenessAnswerText(key: string | undefined, questionType: string): string {
+    if (!key) return 'Non renseigné';
+    
+    const answerMappings: Record<string, string> = {
+      // General knowledge answers
+      'know': questionType.includes('hypertension_knowledge') ? 'Oui, ils savent ce que c\'est.' : 'Oui, je sais ce que c\'est.',
+      'know_little': questionType.includes('hypertension_knowledge') ? 'Oui, ils en savent un peu.' : 'Oui, j\'en sais un peu.',
+      'dont_know': questionType.includes('hypertension_knowledge') ? 'Non, ils ne savent rien.' : 'Non, je ne sais rien.',
+      
+      // Symptom knowledge answers
+      'more_than_three': 'Oui, ils peuvent fournir plus de trois symptômes.',
+      'one_to_three': 'Oui, ils peuvent fournir un à trois symptômes.',
+      'none': 'Non, ils ne peuvent fournir aucun symptôme.',
+      
+      // Action knowledge answers
+      'know_action': 'Oui, je sais quoi faire (contacter un agent de santé).',
+      'dont_know_action': 'Non, je ne sais pas.'
+    };
+    
+    return answerMappings[key] || key;
   }
 
   // Stats

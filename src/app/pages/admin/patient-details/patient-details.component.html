@@ -364,84 +364,130 @@
               <div>
                 <h3 class="text-lg font-semibold text-gray-900">Historique des prédépistages</h3>
                 <p class="text-sm text-gray-500 mt-1">
-                  {{ member?.riskTests?.length || 0 }} prédépistage(s) enregistré(s)
+                  {{ (member?.preScreenings?.length || 0) + (member?.riskTests?.length || 0) }} prédépistage(s) enregistré(s)
                 </p>
               </div>
-              <!-- <p-button
-                label="Nouveau prédépistage"
-                icon="pi pi-plus"
-                size="small"
-                (onClick)="newScreening()"
-              /> -->
             </div>
           </ng-template>
           <ng-template pTemplate="content">
-            <p-table
-              [value]="member?.riskTests || []"
-              [paginator]="true"
-              [rows]="10"
-              styleClass="p-datatable-sm"
-            >
-              <ng-template pTemplate="header">
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">Score de risque</th>
-                  <th scope="col">Niveau</th>
-                  <th scope="col" class="hidden lg:table-cell">Facteurs de risque</th>
-                  <th scope="col" class="text-right">Actions</th>
-                </tr>
-              </ng-template>
-              <ng-template pTemplate="body" let-riskTest>
-                <tr>
-                  <td>{{ riskTest.testdate }}</td>
-                  <td>
-                    <p-tag
-                      [value]="riskTest.testtype"
-                      [severity]="riskTest.testtype === 'Hypertension' ? 'danger' : 'warn'"
-                    />
-                  </td>
-                  <td>
-                    <span class="font-mono text-lg font-bold">{{ riskTest.risklevel || '—' }}</span>
-                  </td>
-                  <td>
-                    <p-tag
-                      [value]="getRiskLevelFromScore(riskTest.risklevel)"
-                      [severity]="getRiskSeverityFromScore(riskTest.risklevel)"
-                    />
-                  </td>
-                  <td class="hidden lg:table-cell">
-                    <p
-                      class="text-sm text-gray-600 truncate max-w-xs"
-                      [pTooltip]="riskTest.testresult"
-                    >
-                      {{ formatTestResult(riskTest.testresult) }}
-                    </p>
-                  </td>
-                  <td>
-                    <div class="flex items-center justify-end gap-2">
-                      <p-button
-                        icon="pi pi-eye"
-                        [text]="true"
+            <!-- Modern PreScreenings -->
+            <div *ngIf="member?.preScreenings " class="space-y-4 mb-6">
+              <h4 class="text-md font-semibold text-gray-800 flex items-center gap-2">
+                <i class="pi pi-search text-purple-600"></i>
+                Prédépistages récents
+              </h4>
+
+              <div
+                *ngFor="let preScreening of member?.preScreenings"
+                class="border border-gray-200 rounded-lg overflow-hidden hover:border-purple-300 transition-colors cursor-pointer"
+                (click)="viewPreScreening(preScreening)"
+              >
+                <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-4 border-b border-gray-200">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="flex items-center gap-3">
+                        <i class="pi pi-search text-purple-600 text-2xl"></i>
+                        <div>
+                          <h4 class="font-semibold text-gray-900">
+                            Prédépistage du {{ preScreening.createdAt | date : 'dd/MM/yyyy' }}
+                          </h4>
+                          <p class="text-sm text-gray-600 mt-1">
+                            <i class="pi pi-user mr-1"></i>
+                            ACS: {{ preScreening.workerName }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <p-tag
+                        [value]="preScreening.disease"
+                        [severity]="preScreening.disease === 'Hypertension' ? 'danger' : 'warn'"
+                      />
+                      <p-tag
+                        [value]="preScreening.riskLevelLabel + ' (' + (preScreening.riskLevel || 0) + ')'"
+                        [severity]="getRiskLevelSeverity(preScreening.riskLevel)"
                         [rounded]="true"
-                        severity="info"
-                        size="small"
-                        pTooltip="Voir détails"
-                        (onClick)="viewRiskTest(riskTest)"
                       />
                     </div>
-                  </td>
-                </tr>
-              </ng-template>
-              <ng-template pTemplate="emptymessage">
-                <tr>
-                  <td colspan="6" class="text-center py-8">
-                    <i class="pi pi-inbox text-gray-400 text-4xl mb-3"></i>
-                    <p class="text-gray-500">Aucun prédépistage enregistré</p>
-                  </td>
-                </tr>
-              </ng-template>
-            </p-table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Legacy Risk Tests -->
+            <div *ngIf="member?.preScreenings" class="space-y-4">
+              <h4 class="text-md font-semibold text-gray-800 flex items-center gap-2">
+                <i class="pi pi-history text-gray-500"></i>
+                Prédépistages
+              </h4>
+
+              <p-table
+                [value]="member?.preScreenings ?? []"
+                [paginator]="true"
+                [rows]="10"
+                styleClass="p-datatable-sm"
+              >
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Score de risque</th>
+                    <th scope="col" class="hidden lg:table-cell">Facteurs de risque</th>
+                    <th scope="col" class="text-right">Actions</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-preScreening>
+                  <tr>
+                    <td>{{ preScreening.createdAt | date : 'dd/MM/yyyy' }}</td>
+                    <td>
+                      <p-tag
+                        [value]="preScreening.disease"
+                        [severity]="preScreening.disease === 'Hypertension' ? 'danger' : 'warn'"
+                      />
+                    </td>
+                    <td>
+                      <span class="font-mono text-lg font-bold">{{ preScreening.riskLevel || '—' }}</span>
+                    </td>
+                    <td>
+                      <p-tag
+                        [value]="preScreening.riskLevelLabel + ' (' + (preScreening.riskLevel || 0) + ')'"
+                        [severity]="getRiskLevelSeverity(preScreening.riskLevel)"
+                        [rounded]="true"
+                      />
+                    </td>
+
+                    <td>
+                      <div class="flex items-center justify-end gap-2">
+                        <p-button
+                          icon="pi pi-eye"
+                          [text]="true"
+                          [rounded]="true"
+                          severity="info"
+                          size="small"
+                          pTooltip="Voir détails"
+                          (onClick)="viewPreScreening(preScreening)"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                  <tr>
+                    <td colspan="6" class="text-center py-8">
+                      <i class="pi pi-inbox text-gray-400 text-4xl mb-3"></i>
+                      <p class="text-gray-500">Aucun ancien prédépistage trouvé</p>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+
+            <!-- Message si aucun prédépistage -->
+            <div *ngIf="(!member?.preScreenings || member?.preScreenings?.length === 0)" class="text-center py-12">
+              <i class="pi pi-search text-gray-400 text-5xl mb-4"></i>
+              <p class="text-gray-500 text-lg">Aucun prédépistage enregistré</p>
+              <p class="text-gray-400 text-sm mt-2">Les prédépistages apparaîtront ici une fois effectués</p>
+            </div>
           </ng-template>
         </p-card>
       </div>
@@ -983,13 +1029,9 @@
                           <p class="text-sm text-gray-900">
                             <i
                               class="pi mr-2"
-                              [ngClass]="{
-                                'pi-check-circle text-green-500': awareness.hypertension_knowledge?.includes('Oui, ils savent ce que'),
-                                'pi-minus-circle text-yellow-500': awareness.hypertension_knowledge?.includes('Oui, ils en savent un peu'),
-                                'pi-times-circle text-red-500': awareness.hypertension_knowledge?.includes('Non')
-                              }"
+                              [ngClass]="getAwarenessAnswerIconClass(awareness.hypertension_knowledge, 'hypertension_knowledge')"
                             ></i>
-                            {{ awareness.hypertension_knowledge }}
+                            {{ getAwarenessAnswerText(awareness.hypertension_knowledge, 'hypertension_knowledge') }}
                           </p>
                         </div>
 
@@ -1000,13 +1042,9 @@
                           <p class="text-sm text-gray-900">
                             <i
                               class="pi mr-2"
-                              [ngClass]="{
-                                'pi-check-circle text-green-500': awareness.hypertension_symptoms?.includes('plus de trois'),
-                                'pi-minus-circle text-yellow-500': awareness.hypertension_symptoms?.includes('un à trois'),
-                                'pi-times-circle text-red-500': awareness.hypertension_symptoms?.includes('aucun')
-                              }"
+                              [ngClass]="getAwarenessAnswerIconClass(awareness.hypertension_symptoms, 'hypertension_symptoms')"
                             ></i>
-                            {{ awareness.hypertension_symptoms }}
+                            {{ getAwarenessAnswerText(awareness.hypertension_symptoms, 'hypertension_symptoms') }}
                           </p>
                         </div>
 
@@ -1017,12 +1055,9 @@
                           <p class="text-sm text-gray-900">
                             <i
                               class="pi mr-2"
-                              [ngClass]="{
-                                'pi-check-circle text-green-500': awareness.hypertension_action?.includes('Oui'),
-                                'pi-times-circle text-red-500': awareness.hypertension_action?.includes('Non')
-                              }"
+                              [ngClass]="getAwarenessAnswerIconClass(awareness.hypertension_action, 'hypertension_action')"
                             ></i>
-                            {{ awareness.hypertension_action }}
+                            {{ getAwarenessAnswerText(awareness.hypertension_action, 'hypertension_action') }}
                           </p>
                         </div>
                       </div>
@@ -1043,13 +1078,9 @@
                           <p class="text-sm text-gray-900">
                             <i
                               class="pi mr-2"
-                              [ngClass]="{
-                                'pi-check-circle text-green-500': awareness.diabetes_knowledge?.includes('Oui, je sais ce que'),
-                                'pi-minus-circle text-yellow-500': awareness.diabetes_knowledge?.includes('Oui, j\'en sais un peu'),
-                                'pi-times-circle text-red-500': awareness.diabetes_knowledge?.includes('Non')
-                              }"
+                              [ngClass]="getAwarenessAnswerIconClass(awareness.diabetes_knowledge, 'diabetes_knowledge')"
                             ></i>
-                            {{ awareness.diabetes_knowledge }}
+                            {{ getAwarenessAnswerText(awareness.diabetes_knowledge, 'diabetes_knowledge') }}
                           </p>
                         </div>
 
@@ -1060,13 +1091,9 @@
                           <p class="text-sm text-gray-900">
                             <i
                               class="pi mr-2"
-                              [ngClass]="{
-                                'pi-check-circle text-green-500': awareness.diabetes_signs?.includes('Oui, je sais ce que'),
-                                'pi-minus-circle text-yellow-500': awareness.diabetes_signs?.includes('Oui, j\'en sais un peu'),
-                                'pi-times-circle text-red-500': awareness.diabetes_signs?.includes('Non')
-                              }"
+                              [ngClass]="getAwarenessAnswerIconClass(awareness.diabetes_signs, 'diabetes_signs')"
                             ></i>
-                            {{ awareness.diabetes_signs }}
+                            {{ getAwarenessAnswerText(awareness.diabetes_signs, 'diabetes_signs') }}
                           </p>
                         </div>
 
@@ -1077,12 +1104,9 @@
                           <p class="text-sm text-gray-900">
                             <i
                               class="pi mr-2"
-                              [ngClass]="{
-                                'pi-check-circle text-green-500': awareness.diabetes_action?.includes('Oui'),
-                                'pi-times-circle text-red-500': awareness.diabetes_action?.includes('Non')
-                              }"
+                              [ngClass]="getAwarenessAnswerIconClass(awareness.diabetes_action, 'diabetes_action')"
                             ></i>
-                            {{ awareness.diabetes_action }}
+                            {{ getAwarenessAnswerText(awareness.diabetes_action, 'diabetes_action') }}
                           </p>
                         </div>
                       </div>
@@ -2130,11 +2154,17 @@
       </div>
       <p-tag
         [value]="selectedPreScreening.riskLevelLabel + ' (' + (selectedPreScreening.riskLevel || 0) + ')'"
-        [severity]="getRiskLevelSeverityLabel(selectedPreScreening.riskLevel)"
+        [severity]="getRiskLevelSeverity(selectedPreScreening.riskLevel)"
         styleClass="text-sm"
       />
     </div>
 
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>{{ selectedPreScreening.workerName }}</strong></span>
+    </div>
+    <p-divider />
     <!-- Test Info -->
     <div class="grid grid-cols-2 gap-4">
       <div class="p-4 bg-purple-50 rounded-lg">
@@ -2150,34 +2180,28 @@
     <!-- Risk Factors -->
     <div>
       <h4 class="text-sm font-semibold text-gray-700 mb-3">Facteurs de risque évalués</h4>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-1 gap-1">
         <div
           *ngFor="let factor of parsePreScreeningAnswers(selectedPreScreening.answers)"
-          class="p-2 rounded-lg border text-sm"
-          [ngClass]="factor.value ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'"
+          class="p-2 rounded-lg bg-blue-100 border-blue-400 text-sm"
         >
           <div class="flex items-center justify-between">
-            <span [ngClass]="factor.value ? 'text-red-800' : 'text-green-800'">{{ factor.label }}</span>
-            <i
-              class="pi text-xs"
-              [ngClass]="factor.value ? 'pi-times text-red-600' : 'pi-check text-green-600'"
-            ></i>
+            <span>{{ factor.label }}</span>
+            <span class="font-bold">{{ factor.answer }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <p-divider />
-
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>{{ selectedPreScreening.workerName }}</strong></span>
-    </div>
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button label="Fermer" [text]="true" severity="secondary" (onClick)="closePreScreeningModal()" />
+    <p-button
+      label="Fermer"
+      [text]="true"
+      severity="secondary"
+      (onClick)="closePreScreeningModal()"
+    />
   </ng-template>
 </p-dialog>
 
@@ -2223,7 +2247,12 @@
         styleClass="text-lg px-4 py-2"
       />
     </div>
-
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>Agent de santé</strong></span>
+    </div>
+    <p-divider />
     <!-- Measurements -->
     <div>
       <h4 class="text-sm font-semibold text-gray-700 mb-3">Mesures détaillées</h4>
@@ -2259,13 +2288,6 @@
       </div>
     </div>
 
-    <p-divider />
-
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>Agent de santé</strong></span>
-    </div>
   </div>
 
   <ng-template pTemplate="footer">
@@ -2315,7 +2337,12 @@
         styleClass="text-lg px-4 py-2"
       />
     </div>
-
+    <!-- ACS Info -->
+    <div class="flex items-center gap-3 text-gray-600">
+      <i class="pi pi-user"></i>
+      <span>Réalisé par: <strong>Agent de santé</strong></span>
+    </div>
+        <p-divider />
     <!-- Test Conditions -->
     <div class="grid grid-cols-3 gap-4">
       <div class="p-4 bg-blue-50 rounded-lg text-center">
@@ -2351,13 +2378,6 @@
       </div>
     </div>
 
-    <p-divider />
-
-    <!-- ACS Info -->
-    <div class="flex items-center gap-3 text-gray-600">
-      <i class="pi pi-user"></i>
-      <span>Réalisé par: <strong>Agent de santé</strong></span>
-    </div>
   </div>
 
   <ng-template pTemplate="footer">

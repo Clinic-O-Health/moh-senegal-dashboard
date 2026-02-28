@@ -63,7 +63,7 @@ export class RegisterComponent implements OnInit {
   selectedCommune: Commune | null = null;
 
   roles: Role[] = [
-    { label: 'Acteur Communautaire de Santé (ACS)', value: 'ACS' },
+    // { label: 'Acteur Communautaire de Santé (ACS)', value: 'ACS' },
     { label: 'Infirmier Chef de Poste (ICP)', value: 'ICP' },
     { label: 'Sage-femme', value: 'SAGE_FEMME' },
     { label: 'Major', value: 'MAJOR' },

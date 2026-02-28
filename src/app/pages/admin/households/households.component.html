@@ -4,12 +4,12 @@
       <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Ménages</h1>
       <p class="text-gray-600 mt-1">Gestion des ménages et familles</p>
     </div>
-    <p-button
+    <!-- <p-button
       label="Nouveau ménage"
       icon="pi pi-plus"
       severity="primary"
       (onClick)="onNewHousehold()"
-    />
+    /> -->
   </div>
 </div>
 
@@ -122,7 +122,7 @@
         <th class="px-4 py-3 hidden md:table-cell">Dépistés</th>
         <th class="px-4 py-3 hidden md:table-cell">À Risque</th>
         <th class="px-4 py-3 hidden xl:table-cell">ACS</th>
-        <th class="px-4 py-3">Statut</th>
+        <!-- <th class="px-4 py-3">Statut</th> -->
         <th class="px-4 py-3 text-right">Actions</th>
       </tr>
     </ng-template>
@@ -199,12 +199,12 @@
         </td>
 
         <!-- Statut -->
-        <td class="px-4 py-3">
+        <!-- <td class="px-4 py-3">
           <p-tag
             [value]="getStatutLabel(household)"
             [severity]="getStatutSeverity(household)"
           />
-        </td>
+        </td> -->
 
         <!-- Actions -->
         <td class="px-4 py-3">
@@ -218,7 +218,7 @@
               tooltipPosition="left"
               (onClick)="viewHousehold(household)"
             />
-            <p-button
+            <!-- <p-button
               icon="pi pi-pencil"
               [text]="true"
               [rounded]="true"
@@ -226,7 +226,7 @@
               pTooltip="Modifier"
               tooltipPosition="left"
               (onClick)="editHousehold(household)"
-            />
+            /> -->
           </div>
         </td>
       </tr>

@@ -370,7 +370,7 @@ export class WorkersComponent implements OnInit {
     try {
       await this.directusService.directus.request(
         updateUser(user.id, {
-          status: user.status === 'active' ? 'unverified' : 'active'
+          status: user.status === 'active' ? 'unverified' : 'active',
         })
       );
 
