@@ -13,7 +13,7 @@ export interface User {
   language?: string;
   theme?: 'light' | 'dark' | 'auto';
   status?: 'active' | 'invited' | 'draft' | 'suspended' | 'archived' | 'uninvited' | 'unverified';
-  role?: string | Role;
+  role?: any;
   token?: string;
   last_access?: Date | string;
   last_page?: string;

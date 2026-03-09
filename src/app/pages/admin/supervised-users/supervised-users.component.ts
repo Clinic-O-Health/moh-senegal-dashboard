@@ -22,9 +22,9 @@ import { DirectusService } from '@core/services/directus.service';
 import { readUsers, updateUser } from '@directus/sdk';
 import { MessageService } from 'primeng/api';
 
+
 @Component({
-  selector: 'app-workers',
-  standalone: true,
+  selector: 'app-supervised-users',
   imports: [
     CommonModule,
     FormsModule,
@@ -42,12 +42,11 @@ import { MessageService } from 'primeng/api';
     ToggleSwitchModule,
     ToastModule,
   ],
-  templateUrl: './workers.component.html',
-  styleUrl: './workers.component.scss',
+  templateUrl: './supervised-users.component.html',
+  styleUrls: ['./supervised-users.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [MessageService],
 })
-export class WorkersComponent implements OnInit {
+export class SupervisedUsersComponent implements OnInit {
   // Data
   users = signal<UserDisplay[]>([]);
   filteredUsers = signal<UserDisplay[]>([]);
@@ -111,6 +110,9 @@ export class WorkersComponent implements OnInit {
               code: {
                 _neq: 'ADMIN'
               }
+            },
+            supervisor_id: {
+              _eq: localStorage.getItem('user_id')
             }
           }
         })
@@ -404,3 +406,4 @@ export class WorkersComponent implements OnInit {
     return user.status === 'invited';
   }
 }
+

@@ -263,7 +263,7 @@ export class RegisterComponent implements OnInit {
           this.accountCreated = true;
           setTimeout(() => {
             this.router.navigate(['/authentication/verify-account'], {
-              queryParams: { email: encodeURIComponent(this.registerForm.get('email')?.value) },
+              queryParams: { email: this.registerForm.get('email')?.value },
             });
           }, 2000);
         }

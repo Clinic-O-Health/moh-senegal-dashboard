@@ -23,9 +23,10 @@ export class SidebarComponent {
     { label: 'Tableau de bord', icon: 'pi pi-chart-line', route: '/admin/dashboard' },
     { label: 'Patients', icon: 'pi pi-users', route: '/admin/patients' },
     { label: 'Foyers', icon: 'pi pi-home', route: '/admin/households' },
-    { label: 'Personnel', icon: 'pi pi-id-card', route: '/admin/workers' },
     { label: 'Dépistages ', icon: 'pi pi-building', route: '/admin/screenings' },
     { label: 'Pré-dépistages ', icon: 'pi pi-building', route: '/admin/pre-screenings' },
+    { label: 'Personnel', icon: 'pi pi-id-card', route: '/admin/workers' },
+    { label: 'Utilisateurs supervisés', icon: 'pi pi-users', route: '/admin/supervised-users' },
   ];
 
   get sidebarClasses(): string {
@@ -48,7 +49,7 @@ export class SidebarComponent {
       this.closeSidebar();
     }
   }
-  logout(){
+  logout() {
     this.authService.logout();
   }
 }

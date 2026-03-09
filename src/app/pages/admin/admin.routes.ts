@@ -8,6 +8,7 @@ import { PatientDetailsComponent } from './patient-details/patient-details.compo
 import { HouseholdsComponent } from './households/households.component';
 import { HouseholdDetailsComponent } from './household-details/household-details.component';
 import { PreScreeningsComponent } from './pre-screenings/pre-screenings.component';
+import { SupervisedUsersComponent } from './supervised-users/supervised-users.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -38,6 +39,10 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'pre-screenings',
         component: PreScreeningsComponent,
+      },
+      {
+        path: 'supervised-users',
+        component: SupervisedUsersComponent,
       },
       {
         path: 'households',

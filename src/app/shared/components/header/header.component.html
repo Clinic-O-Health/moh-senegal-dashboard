@@ -26,15 +26,15 @@
     <!-- Actions utilisateur -->
     <div class="flex items-center gap-2 md:gap-4">
       <!-- Notifications -->
-      <!-- <p-button
+      <p-button
         icon="pi pi-bell"
         [text]="true"
         [rounded]="true"
         severity="secondary"
-        [badge]="'3'"
+        [badge]="unreadCount.toString()"
         badgeSeverity="danger"
         (click)="op.toggle($event)"
-      /> -->
+      />
       @if(user()){
 
       <!-- Profil utilisateur -->
@@ -60,36 +60,70 @@
 </header>
 
 <p-popover #op>
-  <div class="flex flex-col gap-4 w-[25rem]">
-    <div>
-      <span class="font-medium text-surface-900 dark:text-surface-0 block ">Notifications</span>
+  <div class="notification-panel">
+    <!-- Header -->
+    <div class="notification-header">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-bell text-indigo-600"></i>
+        <span class="font-semibold text-gray-900 text-lg">Notifications</span>
+        <span *ngIf="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+      </div>
+      <button
+        *ngIf="unreadCount > 0"
+        (click)="markAllAsRead()"
+        class="mark-all-btn"
+      >
+        <i class="pi pi-check-circle text-xs"></i>
+        Tout marquer comme lu
+      </button>
     </div>
-    <div>
-      <ul class="list-none p-0 m-0 flex flex-col gap-4">
-        <li class="flex items-center gap-2">
-          <p-avatar
-          label="N"
-          styleClass="bg-indigo-600 text-white"
-          shape="circle"
-        />
-          <div>
-            <span class="font-medium">Title</span>
-            <div class="text-sm text-muted-color">Description</div>
-          </div>
-        </li>
-        <li class="flex items-center gap-2">
-          <p-avatar
-          label="N"
-          styleClass="bg-indigo-600 text-white"
-          shape="circle"
-        />
-          <div>
-            <span class="font-medium">Title</span>
-            <div class="text-sm text-muted-color">Description</div>
-          </div>
-        </li>
 
-      </ul>
+    <!-- Loading -->
+    <div *ngIf="loading" class="notification-empty">
+      <i class="pi pi-spin pi-spinner text-2xl text-indigo-500"></i>
+      <span class="text-sm text-gray-500 mt-2">Chargement...</span>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !loading" class="notification-error">
+      <i class="pi pi-exclamation-triangle text-orange-500"></i>
+      <span class="text-sm text-gray-600">{{ error }}</span>
+    </div>
+
+    <!-- Notification list -->
+    <ul *ngIf="!loading && notifications.length > 0" class="notification-list">
+      <li
+        *ngFor="let n of notifications"
+        class="notification-item"
+        [class.notification-unread]="n.status === 'inbox'"
+        (click)="markAsRead(n)"
+      >
+        <div class="notification-dot" *ngIf="n.status === 'inbox'"></div>
+        <div class="notification-icon">
+          <i class="pi pi-envelope text-indigo-600"></i>
+        </div>
+        <div class="notification-content">
+          <span class="notification-subject">{{ n.subject }}</span>
+          <p class="notification-message" *ngIf="n.message">{{ n.message }}</p>
+          <div class="notification-meta">
+            <i class="pi pi-clock text-xs"></i>
+            <span>{{ n.timestamp | date : 'dd MMM yyyy, HH:mm' }}</span>
+          </div>
+        </div>
+        <button
+          class="notification-dismiss"
+          (click)="markAsRead(n); $event.stopPropagation()"
+          title="Marquer comme lu"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+      </li>
+    </ul>
+
+    <!-- Empty state -->
+    <div *ngIf="!loading && notifications.length === 0 && !error" class="notification-empty">
+      <i class="pi pi-inbox text-4xl text-gray-300"></i>
+      <span class="text-sm text-gray-400 mt-2">Aucune notification</span>
     </div>
   </div>
 </p-popover>
